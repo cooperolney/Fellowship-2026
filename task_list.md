@@ -5,3 +5,5 @@ Tasks for 6/5
 - Bayes Rules Ch 1-4
 - Collect data with rvest or other R/python packages
 - Data exploration of play-by-play data
+
+
