@@ -1,6 +1,7 @@
-Task List
+# Task List
 
-Tasks for 6/5
+## Tasks for 6/5
+
 - Review research paper
 - Bayes Rules Ch 1-4
 - Collect data with rvest or other R/python packages
