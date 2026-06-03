@@ -1,0 +1,46 @@
+---
+title: "data_exploration"
+format: html
+---
+
+```{r}
+library(tidyverse)
+```
+
+
+```{r}
+# You can install using the pak package using the following code:
+if (!requireNamespace('pak', quietly = TRUE)){
+  install.packages('pak')
+}
+pak::pak("sportsdataverse/hoopR")
+```
+
+```{r}
+# pbp for 2026 season
+tictoc::tic()
+progressr::with_progress({
+  mbb_pbp_2026 <-  hoopR::load_mbb_pbp()
+})
+tictoc::toc()
+```
+
+```{r}
+# duke vs uconn game
+duke_uconn <- mbb_pbp_2026 |> 
+  filter(home_team_abbrev == "DUKE" & away_team_abbrev == "CONN")
+```
+
+```{r}
+# all available seasons
+tictoc::tic()
+progressr::with_progress({
+  mbb_pbp_all <-  hoopR::load_mbb_pbp(
+    seasons = 2006:2026
+  )
+})
+tictoc::toc()
+```
+
+
+
