@@ -171,6 +171,31 @@ michelle_posterior %>%
 nrow(michelle_posterior)
 ```
 
+# Chapter 4: Balance and Sequentiality in Bayesian Analyses
+```{r}
+# Import data
+data(bechdel, package = "bayesrules")
+
+# Take a sample of 20 movies
+set.seed(84735)
+bechdel_20 <- bechdel %>%
+  sample_n(20)
+
+bechdel_20 %>% 
+  head(3)
+
+bechdel_20 %>% 
+  tabyl(binary) %>% 
+  adorn_totals("row")
+
+# Plot the Beta-Binomial model
+plot_beta_binomial(alpha = 1, beta = 2, y = 4, n = 10)
+plot_beta_binomial(alpha = 0.5, beta = 1, y = 4, n = 10)
+
+# Obtain numerical summaries of the Beta-Binomial model
+summarize_beta_binomial(alpha = 10, beta = 2, y = 10, n = 20)
+```
+
 
 
 
