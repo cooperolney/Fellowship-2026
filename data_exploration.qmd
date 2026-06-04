@@ -7,6 +7,7 @@ format: html
 library(tidyverse)
 ```
 
+# Data Collection
 
 ```{r}
 # You can install using the pak package using the following code:
@@ -23,24 +24,68 @@ progressr::with_progress({
   mbb_pbp_2026 <-  hoopR::load_mbb_pbp()
 })
 tictoc::toc()
+
+print(object.size(mbb_pbp_2026), units = "auto")
 ```
 
 ```{r}
 # duke vs uconn game
 duke_uconn <- mbb_pbp_2026 |> 
   filter(home_team_abbrev == "DUKE" & away_team_abbrev == "CONN")
+
+```
+
+
+
+# Data Exploration
+
+```{r}
+# only keep important cols and add time_elapsed and lead_diff 
+mbb_pbp_2026 <- mbb_pbp_2026 |> select(
+  game_id, home_score, away_score, end_game_seconds_remaining, scoring_play, score_value, home_team_name, away_team_name, season_type, period_number, game_date 
+  ) |>
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining,
+         lead_diff = home_score - away_score)
 ```
 
 ```{r}
-# all available seasons
-tictoc::tic()
-progressr::with_progress({
-  mbb_pbp_all <-  hoopR::load_mbb_pbp(
-    seasons = 2006:2026
-  )
-})
-tictoc::toc()
+# sanity checks
+
+# There are 6275 different games from the 2026 season and there are some games that involve one non D1 school
+mbb_pbp_2026 |> group_by(game_id)
+
+# check for NA values
+anyNA(mbb_pbp_2026)
+is.na()
 ```
+
+```{r}
+# home win rate
+mbb_pbp_2026 |> 
+  group_by(game_id) |>
+  filter(time_elapsed == max(time_elapsed, na.rm = TRUE)) |>
+  slice(1) |> 
+  ungroup() |>
+  summarise(home_win_rate = mean(home_score > away_score))
+```
+
+```{r}
+# duke vs uconn plot
+
+duke_uconn <- mbb_pbp_2026 |> 
+  filter(home_team_name == "Duke" & away_team_name == "UConn")
+
+duke_uconn |>
+  ggplot(aes(x = time_elapsed, y = lead_diff)) +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme_minimal()
+```
+
+
+
+
+
 
 
 
