@@ -21,11 +21,23 @@ pak::pak("sportsdataverse/hoopR")
 # pbp for 2026 season
 tictoc::tic()
 progressr::with_progress({
-  mbb_pbp_2026 <-  hoopR::load_mbb_pbp()
+  mbb_pbp <-  hoopR::load_mbb_pbp()
 })
 tictoc::toc()
 
 print(object.size(mbb_pbp_2026), units = "auto")
+```
+
+
+# Data Exploration
+
+```{r}
+# only keep important cols and add time_elapsed and lead_diff 
+mbb_pbp_2026 <- mbb_pbp |> select(
+  game_id, home_score, away_score, end_game_seconds_remaining, scoring_play, score_value, home_team_name, away_team_name, season_type, period_number, game_date 
+  ) |>
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining,
+         lead_diff = home_score - away_score)
 ```
 
 ```{r}
@@ -35,28 +47,10 @@ duke_uconn <- mbb_pbp_2026 |>
 
 ```
 
-
-
-# Data Exploration
-
 ```{r}
-# only keep important cols and add time_elapsed and lead_diff 
-mbb_pbp_2026 <- mbb_pbp_2026 |> select(
-  game_id, home_score, away_score, end_game_seconds_remaining, scoring_play, score_value, home_team_name, away_team_name, season_type, period_number, game_date 
-  ) |>
-  mutate(time_elapsed = 2400 - end_game_seconds_remaining,
-         lead_diff = home_score - away_score)
-```
-
-```{r}
-# sanity checks
-
 # There are 6275 different games from the 2026 season and there are some games that involve one non D1 school
 mbb_pbp_2026 |> group_by(game_id)
 
-# check for NA values
-anyNA(mbb_pbp_2026)
-is.na()
 ```
 
 ```{r}
@@ -67,6 +61,8 @@ mbb_pbp_2026 |>
   slice(1) |> 
   ungroup() |>
   summarise(home_win_rate = mean(home_score > away_score))
+
+# home win rate is 63.7% which is lower than expected (google says 68.7%)
 ```
 
 ```{r}
@@ -82,7 +78,36 @@ duke_uconn |>
   theme_minimal()
 ```
 
+```{r}
+# find games with least/most plays to see if there is scraping errors
+mbb_pbp_2026 |>
+  group_by(game_id) |>
+  summarise(n_plays = n()) |>
+  arrange(desc(n_plays))
 
+# Game with least plays: the issue is that espn seems to be missing plays and not an issue with the scraping
+mbb_pbp_2026 |> filter(game_id == 401824072) |> relocate(home_team_name, away_team_name)
+
+# Game with most plays: the issue is that espn play by play glitched and it doubled up every play
+mbb_pbp_2026 |> filter(game_id == 401817534) |> relocate(home_team_name, away_team_name)
+
+```
+
+```{r}
+# what happens for an overtime game
+ot_game <- mbb_pbp_2026 |> 
+  filter(home_team_name == "Kentucky" & away_team_name == "Santa Clara") |>
+  relocate(time_elapsed) |> arrange(desc(time_elapsed))
+# for time elapsed there is one NA value
+# then when in ot, end_game_seconds_remaining resets to 300 (5 mins), 
+# for example then there are two very different game scores when time elapsed is 2400, it is 73-73 and 89-84
+
+ot_game |>
+  ggplot(aes(x = time_elapsed, y = lead_diff)) +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme_minimal()
+```
 
 
 
