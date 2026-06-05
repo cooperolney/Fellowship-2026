@@ -12,8 +12,8 @@ library(janitor)
 
 # Chapter 1: The Big (Bayesian) Picture - 6/2
 
-
 # Chapter 2 Bayes’ Rule - 6/2
+
 ```{r}
 data(fake_news)
 
@@ -28,6 +28,7 @@ fake_news %>%
 ```
 
 ### 2.1.5 Posterior Simulation
+
 ```{r}
 # Define possible articles
 article <- data.frame(type = c("real", "fake"))
@@ -88,6 +89,7 @@ ggplot(article_sim, aes(x = type)) +
 ```
 
 ## 2.2 Example pop vs soda vs coke
+
 ```{r}
 # Load the data
 data(pop_vs_soda)
@@ -99,6 +101,7 @@ pop_vs_soda %>%
 ```
 
 ### 2.3.7 Posterior Simulation
+
 ```{r}
 # Define possible win probabilities
 chess <- data.frame(pi = c(0.2, 0.5, 0.8))
@@ -143,12 +146,14 @@ ggplot(win_one, aes(x = pi)) +
 ```
 
 # Chapter 3 The Beta Binomial Bayesian Model - 6/3
+
 ```{r}
 # 3.3
 summarize_beta_binomial(alpha = 45, beta = 55, y = 30, n = 50)
 ```
 
 ## 3.5 Simulating the Beta-Binomial
+
 ```{r}
 set.seed(84735)
 michelle_sim <- data.frame(pi = rbeta(10000, 45, 55)) %>% 
@@ -172,6 +177,7 @@ nrow(michelle_posterior)
 ```
 
 # Chapter 4: Balance and Sequentiality in Bayesian Analyses
+
 ```{r}
 # Import data
 data(bechdel, package = "bayesrules")
@@ -197,6 +203,151 @@ summarize_beta_binomial(alpha = 10, beta = 2, y = 10, n = 20)
 ```
 
 
+# Chapter 6: Approximating the Posterior
+```{r}
+library(rstan)
+library(bayesplot)
+```
 
+## 6.1 Grid Approximation
+```{r}
+# Beta Binomial Example
+
+# Step 1: Define a grid of 6 pi values
+grid_data <- data.frame(pi_grid = seq(from = 0, to = 1, length = 6))
+
+# Step 2: Evaluate the prior & likelihood at each pi
+grid_data <- grid_data %>% 
+  mutate(prior = dbeta(pi_grid, 2, 2),
+         likelihood = dbinom(9, 10, pi_grid))
+
+# Step 3: Approximate the posterior
+grid_data <- grid_data %>% 
+  mutate(unnormalized = likelihood * prior,
+         posterior = unnormalized / sum(unnormalized))
+
+# Confirm that the posterior approximation sums to 1
+grid_data %>% 
+  summarize(sum(unnormalized), sum(posterior))
+  sum(unnormalized) sum(posterior)
+  
+# Examine the grid approximated posterior
+round(grid_data, 2)
+
+# Plot the grid approximated posterior
+ggplot(grid_data, aes(x = pi_grid, y = posterior)) + 
+  geom_point() + 
+  geom_segment(aes(x = pi_grid, xend = pi_grid, y = 0, yend = posterior))
+
+# Set the seed
+set.seed(84735)
+
+# Step 4: sample from the discretized posterior
+post_sample <- sample_n(grid_data, size = 10000, 
+                        weight = posterior, replace = TRUE)
+
+# A table of the 10000 sample values
+post_sample %>% 
+  tabyl(pi_grid) %>% 
+  adorn_totals("row")
+
+# Histogram of the grid simulation with posterior pdf
+ggplot(post_sample, aes(x = pi_grid)) + 
+  geom_histogram(aes(y = ..density..), color = "white") + 
+  stat_function(fun = dbeta, args = list(11, 3)) + 
+  lims(x = c(0, 1))
+
+
+
+# Step 1: Define a grid of 101 pi values
+grid_data  <- data.frame(pi_grid = seq(from = 0, to = 1, length = 101))
+
+# Step 2: Evaluate the prior & likelihood at each pi
+grid_data <- grid_data %>% 
+  mutate(prior = dbeta(pi_grid, 2, 2),
+         likelihood = dbinom(9, 10, pi_grid))
+
+# Step 3: Approximate the posterior
+grid_data <- grid_data %>% 
+  mutate(unnormalized = likelihood * prior,
+         posterior = unnormalized / sum(unnormalized))
+
+ggplot(grid_data, aes(x = pi_grid, y = posterior)) + 
+  geom_point() + 
+  geom_segment(aes(x = pi_grid, xend = pi_grid, y = 0, yend = posterior))
+
+# Set the seed
+set.seed(84735)
+
+# Step 4: sample from the discretized posterior
+post_sample <- sample_n(grid_data, size = 10000, 
+                        weight = posterior, replace = TRUE)
+
+ggplot(post_sample, aes(x = pi_grid)) + 
+  geom_histogram(aes(y = ..density..), color = "white", binwidth = 0.05) + 
+  stat_function(fun = dbeta, args = list(11, 3)) + 
+  lims(x = c(0, 1))
+```
+
+```{r}
+# Gamma Poisson Example
+
+plot_gamma_poisson(s = 3, r = 1, sum_y = 10, n = 2, posterior = FALSE)
+
+# Step 1: Define a grid of 501 lambda values
+grid_data   <- data.frame(lambda_grid = seq(from = 0, to = 15, length = 501))
+
+# Step 2: Evaluate the prior & likelihood at each lambda
+grid_data <- grid_data %>% 
+  mutate(prior = dgamma(lambda_grid, 3, 1),
+         likelihood = dpois(2, lambda_grid) * dpois(8, lambda_grid))
+
+# Step 3: Approximate the posterior
+grid_data <- grid_data %>% 
+  mutate(unnormalized = likelihood * prior,
+         posterior = unnormalized / sum(unnormalized))
+
+# Set the seed
+set.seed(84735)
+
+# Step 4: sample from the discretized posterior
+post_sample <- sample_n(grid_data, size = 10000, 
+                        weight = posterior, replace = TRUE)
+
+# Histogram of the grid simulation with posterior pdf 
+ggplot(post_sample, aes(x = lambda_grid)) + 
+  geom_histogram(aes(y = ..density..), color = "white") + 
+  stat_function(fun = dgamma, args = list(13, 3)) + 
+  lims(x = c(0, 15))
+```
+
+```{r}
+# A Beta Binomial example
+
+# STEP 1: DEFINE the model
+bb_model <- "
+  data {
+    int<lower = 0, upper = 10> Y;
+  }
+  parameters {
+    real<lower = 0, upper = 1> pi;
+  }
+  model {
+    Y ~ binomial(10, pi);
+    pi ~ beta(2, 2);
+  }
+"
+
+# STEP 2: SIMULATE the posterior
+bb_sim <- stan(model_code = bb_model, data = list(Y = 9), 
+               chains = 4, iter = 5000*2, seed = 84735)
+
+```
+
+## 6.3 Markov chain diagnostics
+```{r}
+# Calculate the effective sample size ratio
+neff_ratio(bb_sim, pars = c("pi"))
+```
 
 
