@@ -179,7 +179,7 @@ ggplot(data = preds_log_mod, aes(x = time_elapsed, y = predicted)) +
   theme_minimal()
 ```
 Plot Takeaways
-- When lead_diff = 0, it starts at 67% and slowly decreases over time, so home court advantage slightly fades at time goes on
+- When lead_diff = 0, it starts at 67% and slowly decreases over time, so home court advantage slightly fades as time goes on
 - The lines spread out over time because of the interaction term, for example a 5 point lead means more in the last minutes of the game then the first minutes.
 - Home court advantage shifts all of the lines up, the positive lead diff lines are higher up than the negative lead diff lines are lower down.
 
@@ -223,6 +223,24 @@ ggplot(duke_uconn, aes(x = time_elapsed, y = predicted)) +
   theme_minimal()
 
 ```
-The peak home team win prob was  98% right before halftime which is very similar to ESPN win probability model.
+- The peak home team win prob was 98% right before halftime which is very similar to ESPN win probability model.
+
+
+
+# Basic Data Summary
+
+```{r}
+mbb_pbp |> summarise(
+  total_games = n_distinct(game_id),
+  total_playoff_games = n_distinct(game_id[season_type == 3]),
+  total_teams = n_distinct(home_team_id)
+  )
+```
+- total games: 6275
+  - So with a row every second there will be over 15 million rows, maybe just pull teams from the biggest conferences.
+- total playoff games: 105 (includes other tournaments besides MM)
+- total teams: using home_team_id = 366, using away_team_id = 720
+  - There are 365 D1 basketball teams, so some non D1 schools are included in the data.
+
 
 
