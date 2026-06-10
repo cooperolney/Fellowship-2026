@@ -351,3 +351,53 @@ neff_ratio(bb_sim, pars = c("pi"))
 ```
 
 
+# Chapter 8: Posterior Inference and Prediction
+```{r}
+# Load packages
+library(bayesrules)
+library(tidyverse)
+library(rstan)
+library(bayesplot)
+library(broom.mixed)
+library(janitor)
+
+# Load data
+data("moma_sample")
+
+moma_sample %>% 
+  group_by(genx) %>% 
+  tally()
+
+plot_beta_binomial(alpha = 4, beta = 6, y = 14, n = 100)
+```
+
+## 8.4 Posterior Analysis with MCMC
+```{r}
+# STEP 1: DEFINE the model
+art_model <- "
+  data {
+    int<lower = 0, upper = 100> Y;
+  }
+  parameters {
+    real<lower = 0, upper = 1> pi;
+  }
+  model {
+    Y ~ binomial(100, pi);
+    pi ~ beta(4, 6);
+  }
+"
+
+# STEP 2: SIMULATE the posterior
+art_sim <- stan(model_code = art_model, data = list(Y = 14), 
+                chains = 4, iter = 5000*2, seed = 84735)
+
+# The actual Beta(18, 92) posterior
+plot_beta(alpha = 18, beta = 92) + 
+  lims(x = c(0, 0.35))
+```
+
+
+
+
+
+
