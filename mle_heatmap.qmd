@@ -1,0 +1,115 @@
+---
+title: "mle_heatmap"
+format: html
+---
+
+```{r}
+library(tidyverse)
+```
+
+
+```{r}
+# Load in 2026 season pbp data
+mbb_pbp <-  hoopR::load_mbb_pbp()
+```
+
+# Basic MLE Heatmap
+```{r}
+# Clean data
+# create new vars: time_elapsed and lead_diff
+mbb_pbp_2026 <- mbb_pbp |>
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining,
+         lead_diff = home_score - away_score)
+
+# create new var: home_win
+mbb_pbp_2026 <- mbb_pbp_2026 |> group_by(game_id) |>
+  mutate(
+    home_win = if_else(
+      is.na(end_game_seconds_remaining) & home_score > away_score, 1, 0
+    )) |>
+  mutate(home_win = max(home_win)) |>
+  ungroup(game_id)
+
+# fill in the NAs
+mbb_pbp_2026 <- mbb_pbp_2026 |> mutate(
+  time_elapsed = if_else(is.na(time_elapsed), 2400, time_elapsed),
+  end_game_seconds_remaining = if_else(is.na(end_game_seconds_remaining), 0, end_game_seconds_remaining)
+)
+
+# only need these columns
+mbb_pbp_2026 <- mbb_pbp_2026 |>
+  select(game_id, time_elapsed, lead_diff, home_win)
+```
+
+```{r}
+# MLE Calculation
+mle_heatmap <- mbb_pbp_2026 |>
+  group_by(time_elapsed, lead_diff) |>
+  summarise(
+    n_games = n(),
+    n_wins = sum(home_win),
+    win_prob = n_wins / n_games
+  ) |>
+  filter(n_games >= 1) # remove the rare situations
+```
+
+```{r}
+# MLE Heatmap
+ggplot(mle_heatmap, aes(x = time_elapsed, y = lead_diff, fill = win_prob)) +
+  geom_tile() +
+  scale_fill_gradientn(colors = c("blue", "green", "white", "yellow", "red")) +
+  labs(x = "Time elapsed", 
+       y = "Score diff",
+       fill = "p") +
+  theme_minimal()
+```
+
+# Clean MLE Heatmap
+```{r}
+# clean 2026 season data, 1 row for 1 second, no duplicates
+
+# works after 5 mins
+mbb_pbp_2026_clean <- mbb_pbp_2026 |>
+  group_by(game_id) |>
+  complete(time_elapsed = 0:2400) |>
+  fill(lead_diff, home_win, .direction = "down") |>
+  group_by(game_id, time_elapsed) |>
+  filter(row_number() == n()) |> # same as slice_tail(n=1)
+  ungroup()
+
+# works after 1 min
+mbb_pbp_2026_clean <- mbb_pbp_2026 |> 
+  group_by(game_id) |> 
+  complete(time_elapsed = 0:2400) |> 
+  fill(lead_diff, home_win, .direction = "down") |> 
+  ungroup() |> 
+  arrange(game_id, time_elapsed, desc(row_number())) |>
+  distinct(game_id, time_elapsed, .keep_all = TRUE)
+
+```
+
+```{r}
+# MLE calculation with cleaned data
+mle_heatmap_clean <- mbb_pbp_2026_clean |>
+  group_by(time_elapsed, lead_diff) |>
+  summarise(
+    n_games = n(),
+    n_wins = sum(home_win),
+    win_prob = n_wins / n_games
+  ) |>
+  filter(n_games >= 1) # remove the rare situations
+
+
+# MLE Heatmap with cleaned data
+ggplot(mle_heatmap_clean, aes(x = time_elapsed, y = lead_diff, fill = win_prob)) +
+  geom_tile() +
+  scale_fill_gradientn(colors = c("blue", "green", "white", "yellow", "red")) +
+  labs(x = "Time elapsed", 
+       y = "Score diff",
+       fill = "p") +
+  theme_minimal()
+```
+
+
+
+
