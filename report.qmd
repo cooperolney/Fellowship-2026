@@ -1,0 +1,238 @@
+---
+title: "Visualizing In-Game Win Probability in College Basketball Through Data Storytelling "
+author: "Cooper Olney"
+date: "2026-07-24"
+format: 
+  html:
+    embed-resources: true
+---
+
+```{r}
+library(tidyverse)
+
+mbb_pbp_2025 <-  hoopR::load_mbb_pbp(seasons = 2025)
+mbb_pbp <-  hoopR::load_mbb_pbp()
+```
+
+# Summary Statistics
+```{r}
+mbb_pbp_2025 |> summarise(
+  total_games = n_distinct(game_id),
+  total_playoff_games = n_distinct(game_id[season_type == 3]),
+  total_home_teams = n_distinct(home_team_id),
+  total_away_teams = n_distinct(away_team_id)
+  )
+```
+
+The dataset for the 2024-25 NCAA Men's Basketball season consisted of 6136 games, with 123 of those games being in the postseason. The postseason consists of many tournaments such as  March Madness, conference tournaments, and other smaller postseason tournaments such as the NIT and the College Basketball Crown. 
+Meaning that during the 2024-25 season there were 6013 regular season games, in the dataset the majority of these games consisted of two NCAA Division 1 teams, but not all of the games. Taking into account that there were 362 Division 1 college basketball during this season, on average each team played about 33 regular season games.
+In the dataset there were 369 different home teams, so there does consist of non-division 1 as the home team in the dataset. There is also 681 different away teams, so there are many more games where a division 1 team played at home against a non-division 1 team. (I doubt there are any games where there was D1 team) I would assume games with non-division 1 teams included are typically early in the season, as division 1 schools use these teams as warm-up games.
+
+
+
+# Frequentist Logistic Regression Model (2025 data)
+```{r}
+# create new vars: time_elapsed & lead_diff
+mbb_pbp_2025 <- mbb_pbp_2025 |> select(
+  game_id, home_score, away_score, end_game_seconds_remaining, scoring_play, score_value, home_team_name, away_team_name, season_type, period_number, game_date 
+  ) |>
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining,
+         lead_diff = home_score - away_score)
+
+# create new var: home_win
+mbb_pbp_2025 <- mbb_pbp_2025 |> group_by(game_id) |>
+  mutate(
+    home_win = if_else(
+      is.na(end_game_seconds_remaining) & home_score > away_score, 1, 0
+    )) |>
+  mutate(home_win = max(home_win)) |>
+  ungroup(game_id)
+
+# fill in the NAs
+mbb_pbp_2025 <- mbb_pbp_2025 |> mutate(
+  time_elapsed = if_else(is.na(time_elapsed), 2400, time_elapsed),
+  end_game_seconds_remaining = if_else(is.na(end_game_seconds_remaining), 0, end_game_seconds_remaining)
+)
+
+
+library(broom)
+library(ggeffects)
+
+
+# logistic regression model
+log_mod <- glm(home_win ~ time_elapsed + lead_diff + time_elapsed:lead_diff,
+               data = mbb_pbp_2025, family = "binomial")
+
+log_mod |> tidy()
+
+# model predictions
+preds_log_mod <- ggpredict(log_mod, terms = c("time_elapsed [0:2400 by=10]", 
+                             "lead_diff [-15, -10, -5, 0, 5, 10, 15]")) |>
+  as.data.frame(terms_to_colnames = TRUE) |>
+  as_tibble()
+
+# Regression visualization
+ggplot(data = preds_log_mod, aes(x = time_elapsed, y = predicted)) +
+  geom_line(aes(color = factor(lead_diff)), linewidth = 1.5) +
+  scale_colour_viridis_d(option = "D") +
+  labs(x = "Time Elapsed (seconds)", 
+       y = "Predicted Home Win Probability",
+       color = "Lead Diff") +
+  theme_minimal()
+
+# Heatmap visualization
+preds_heatmap <- ggpredict(log_mod, terms = c("time_elapsed [0:2400 by=10]", 
+                                               "lead_diff [-25:25 by=1]")) |>
+  as.data.frame(terms_to_colnames = TRUE) |>
+  as_tibble()
+
+ggplot(preds_heatmap, aes(x = time_elapsed, y = lead_diff, fill = predicted)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0.5) +
+  labs(x = "Time Elapsed (seconds)", 
+       y = "Home Team Lead Diff",
+       fill = "Home Win Prob") +
+  theme_minimal()
+```
+
+*Regression Plot*
+This shows how the predicted win probability of the home team changes throughout a game given seven different lead differences. With the a lead diff of 0, the win probability starts at about .67 which shows the home court advantage of college basketball. This is the only regression line that is linear because the interaction term will be not show up when lead_diff = 0. The other regression lines shows how the lead differential is weighted by time. The lead being 10 is more impactful to predicting win probability when there is one minute left compared to when the game is still in the first half. The model doesn't show how win probability should be certain, either 100% or 0% when there is no time left in the game.
+
+*Heatmap Plot*
+Now instead of only a select few lead differentials, the heatmap shows all of the combinations of lead differentials with time. 
+
+
+# Duke vs Uconn
+```{r}
+# lead changes over time visualization
+mbb_pbp_2026 <- mbb_pbp |> select(
+  game_id, home_score, away_score, end_game_seconds_remaining, scoring_play, score_value, home_team_name, away_team_name, season_type, period_number, game_date 
+  ) |>
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining,
+         lead_diff = home_score - away_score)
+
+duke_uconn <- mbb_pbp_2026 |> 
+  filter(home_team_name == "Duke" & away_team_name == "UConn")
+
+duke_uconn |>
+  ggplot(aes(x = time_elapsed, y = lead_diff)) +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Duke Lead Diff") +
+  theme_minimal()
+
+# logistic regression with duke vs uconn
+duke_uconn <- mbb_pbp_2026 |> 
+  filter(home_team_name == "Duke" & away_team_name == "UConn") |>
+  mutate(
+  time_elapsed = if_else(is.na(time_elapsed), 2400, time_elapsed),
+  end_game_seconds_remaining = if_else(is.na(end_game_seconds_remaining), 0, end_game_seconds_remaining)
+) |>
+  mutate(
+    predicted = predict(log_mod, newdata = pick(everything()), type = "response"
+                        ))
+
+ggplot(duke_uconn, aes(x = time_elapsed, y = predicted)) +
+  geom_line() +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = "Time Elapsed (seconds)", 
+       y = "Predicted Home Win Probability",
+       title = "Duke vs UConn: Duke Win Prob") +
+  theme_minimal()
+```
+
+*Lead Changes Over Time Plot*
+In the 2025 March Madness tournament, Duke played UConn in the Elite Eight. This plot examines how Duke's lead changed over time during this game. Just before the first half ended, Duke achieved it's largest lead of the game being 19 points. During the rest of the game UConn was able to comeback and win the game on a buzzer beating shot.
+
+*Logistic Regression Plot*
+Now applying the frequentist logistic regression model based on the 2025 data to this Duke vs. UConn game. Since Duke was considered the home team (even though the game was played at a neutral site) they started with a 67% win probability. And we can see that the win probability roughly matches the shape of the plot for the lead changes throughout the game. Right before the first half ends, the win probability peaks at around 98%, and then decreases as UConn shrinks the lead. The win probability finally goes below 50% once UConn takes the lead with zero seconds left in the game.
+
+
+# MLE Heatmap
+```{r}
+## Clean data
+# create new vars: time_elapsed and lead_diff
+mbb_pbp_2026 <- mbb_pbp |>
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining,
+         lead_diff = home_score - away_score)
+
+# create new var: home_win
+mbb_pbp_2026 <- mbb_pbp_2026 |> group_by(game_id) |>
+  mutate(
+    home_win = if_else(
+      is.na(end_game_seconds_remaining) & home_score > away_score, 1, 0
+    )) |>
+  mutate(home_win = max(home_win)) |>
+  ungroup(game_id)
+
+# fill in the NAs
+mbb_pbp_2026 <- mbb_pbp_2026 |> mutate(
+  time_elapsed = if_else(is.na(time_elapsed), 2400, time_elapsed),
+  end_game_seconds_remaining = if_else(is.na(end_game_seconds_remaining), 0, end_game_seconds_remaining)
+)
+
+# only need these columns
+mbb_pbp_2026 <- mbb_pbp_2026 |>
+  select(game_id, time_elapsed, lead_diff, home_win)
+
+
+## MLE Calculation
+mle_heatmap <- mbb_pbp_2026 |>
+  group_by(time_elapsed, lead_diff) |>
+  summarise(
+    n_games = n(),
+    n_wins = sum(home_win),
+    win_prob = n_wins / n_games
+  ) |>
+  filter(n_games >= 1) # remove the rare situations
+
+
+## MLE Heatmap
+ggplot(mle_heatmap, aes(x = time_elapsed, y = lead_diff, fill = win_prob)) +
+  geom_tile() +
+  scale_fill_gradientn(colors = c("blue", "green", "white", "yellow", "red")) +
+  labs(x = "Time elapsed", 
+       y = "Score diff",
+       fill = "p") +
+  theme_minimal()
+
+
+## Clean Data
+# clean 2026 season data, 1 row for 1 second, no duplicates
+mbb_pbp_2026_clean <- mbb_pbp_2026 |> 
+  group_by(game_id) |> 
+  complete(time_elapsed = 0:2400) |> 
+  fill(lead_diff, home_win, .direction = "down") |> 
+  ungroup() |> 
+  arrange(game_id, time_elapsed, desc(row_number())) |>
+  distinct(game_id, time_elapsed, .keep_all = TRUE)
+
+
+## MLE calculation with cleaned data
+mle_heatmap_clean <- mbb_pbp_2026_clean |>
+  group_by(time_elapsed, lead_diff) |>
+  summarise(
+    n_games = n(),
+    n_wins = sum(home_win),
+    win_prob = n_wins / n_games
+  ) |>
+  filter(n_games >= 1) # remove the rare situations
+
+
+## MLE Heatmap with cleaned data
+ggplot(mle_heatmap_clean, aes(x = time_elapsed, y = lead_diff, fill = win_prob)) +
+  geom_tile() +
+  scale_fill_gradientn(colors = c("blue", "green", "white", "yellow", "red")) +
+  labs(x = "Time elapsed", 
+       y = "Score diff",
+       fill = "p") +
+  theme_minimal()
+```
+
+*Heatmap Plot*
+This heatmap uses  data from all games from the 2026 season, for this data each row is an event and there can be multiple events a second. Overall the plot follows the general trends where a large lead results in high win prob and a large deficit results in a low win prob. The major issue with the MLE model is that for rare situations, for example, games with a 10 point deficit 2 minutes into the game doesn't happen often so there might be inaccurate win probability. Which is why there are some red tiles in spots where it doesn't make sense for the win probability to be extremely high.
+
+*Clean Heatmap Plot*
+This heatmap also uses data from the 2026 season, but each row is 1 second and the duplicate events are removed, resulting in more total rows of data. This heatmap looks very similar to the previous heatmap, since now more combinations of score and time are covered the plot looks smoother. But there is still some inaccurate win probabilities results. Around 800 seconds and a score diff of -30, there are some dark red tiles meaning that the win probability was 100%, this is because one game occurred where the home team was down 30 points 800 seconds into the game, but they ended up winning which causes these outlying red tiles.
+
+
