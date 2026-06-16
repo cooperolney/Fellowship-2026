@@ -1,5 +1,13 @@
 # Task List
 
+## Tasks for 6/18
+
+1. Start a Quarto document for a write up and do a quick write up of some of the basic data summary stuff. Can also include the graphs you've made so far (and brief descriptions).
+
+2. Continue working on incorporating the Bayes with the original paper (beta priors).
+
+3. Mess around with applying the bayesian logistic model to the data you have (a subset of it).
+
 ## Tasks for 6/12
 
 1. Bayes Rules Chapter 7.
