@@ -1,5 +1,15 @@
 # Task List
 
+## Tasks for 6/23
+
+1. Continue working on getting ratings into a joined data set.
+
+2. Incorporate the ratings into the model and look at how the ratings are calculated.
+
+3. Continue working on incorporating the Bayes with the original paper (beta priors).
+
+4. Make some slides for 5-7 minute update on Wednesday (before Tuesday's meeting). 
+
 ## Tasks for 6/18
 
 1. Start a Quarto document for a write up and do a quick write up of some of the basic data summary stuff. Can also include the graphs you've made so far (and brief descriptions).
