@@ -1,0 +1,596 @@
+---
+title: "bayesian_logistic"
+format: html
+---
+
+```{r}
+library(tidyverse)
+library(brms)
+```
+
+# 6/18 Task 3: Mess around with applying the bayesian logistic model to the data you have (a subset of it).
+
+```{r}
+# Load in 2025 season  data
+mbb_pbp <-  hoopR::load_mbb_pbp(seasons = 2025)
+```
+
+## Clean 2025 Season Data
+```{r}
+# Clean data
+# create new vars: time_elapsed and lead_diff
+mbb_pbp_2025 <- mbb_pbp |>
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining,
+         lead_diff = home_score - away_score)
+
+# create new var: home_win
+mbb_pbp_2025 <- mbb_pbp_2025 |> group_by(game_id) |>
+  mutate(
+    home_win = if_else(
+      is.na(end_game_seconds_remaining) & home_score > away_score, 1, 0
+    )) |>
+  mutate(home_win = max(home_win)) |>
+  ungroup(game_id)
+
+# fill in the NAs
+mbb_pbp_2025 <- mbb_pbp_2025 |> mutate(
+  time_elapsed = if_else(is.na(time_elapsed), 2400, time_elapsed),
+  end_game_seconds_remaining = if_else(is.na(end_game_seconds_remaining), 0, end_game_seconds_remaining)
+)
+
+# only need these columns
+mbb_pbp_2025 <- mbb_pbp_2025 |>
+  select(game_id, time_elapsed, lead_diff, home_win)
+
+# 1 row for 1 second, no duplicates
+mbb_pbp_2025 <- mbb_pbp_2025 |> 
+  group_by(game_id) |> 
+  complete(time_elapsed = 0:2400) |> 
+  fill(lead_diff, home_win, .direction = "down") |> 
+  ungroup() |> 
+  arrange(game_id, time_elapsed, desc(row_number())) |>
+  distinct(game_id, time_elapsed, .keep_all = TRUE)
+```
+
+## 2025 Data Subset
+```{r}
+set.seed(123)
+
+unique_games <- mbb_pbp_2025 |> distinct(game_id) |> pull(game_id)
+
+selected_games <- sample(unique_games, 50)
+
+# subset of 50 games
+subset_games <- mbb_pbp_2025 |> 
+  filter(game_id %in% selected_games) |>
+  filter(time_elapsed %% 24 == 0)
+
+# scale time and score so algorithm runs better
+subset_games <- subset_games |>
+  mutate(
+    time_scaled = time_elapsed / 2400,
+    lead_scaled = lead_diff / 50
+  )
+```
+
+## Bayesian Logistic Model
+```{r}
+brm_mod <- brm(home_win ~ lead_diff + time_elapsed + time_elapsed:lead_diff,
+  data = subset_games,
+  family = bernoulli(),
+  prior = c(prior(normal(0, 2), class = "Intercept"))
+)
+
+brm_mod_scaled <- brm(
+  home_win ~ lead_scaled + time_scaled + time_scaled:lead_scaled,
+  data = subset_games,
+  family = bernoulli(),
+  prior = c(prior(normal(0, 2), class = "Intercept"))
+)
+
+plot(brm_mod)
+plot(brm_mod_scaled)
+
+summary(brm_mod)
+summary(brm_mod_scaled)
+```
+
+
+## Compare to Frequentist Logistic Regression
+```{r}
+log_mod <- glm(home_win ~ time_elapsed + lead_diff + time_elapsed:lead_diff,
+               data = mbb_pbp_2025, family = "binomial")
+
+tidy(log_mod)
+```
+
+
+## brm mod Visualization
+```{r}
+# model predictions
+preds_brm_mod <- ggpredict(brm_mod, terms = c("time_elapsed [0:2400 by=10]", 
+                             "lead_diff [-15, -10, -5, 0, 5, 10, 15]")) |>
+  as.data.frame(terms_to_colnames = TRUE) |>
+  as_tibble()
+
+# visualization
+ggplot(preds_brm_mod, aes(x = time_elapsed, y = predicted, 
+                          color = factor(lead_diff))) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = factor(lead_diff)),
+              alpha = 0.25, color = NA) +
+  geom_line(linewidth = 1.5) +
+  scale_colour_viridis_d(option = "D") +
+  scale_fill_viridis_d(option = "D") +
+  labs(x = "Time Elapsed (seconds)", 
+       y = "Predicted Home Win Probability",
+       color = "Lead Diff", 
+       fill = "Lead Diff") +
+  theme_minimal()
+
+# frequentist logistic regression visualization
+ggplot(preds_log_mod, aes(x = time_elapsed, y = predicted, 
+                          color = factor(lead_diff))) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = factor(lead_diff)),
+              alpha = 0.25, color = NA) +
+  geom_line(linewidth = 1.5) +
+  scale_colour_viridis_d(option = "D") +
+  scale_fill_viridis_d(option = "D") +
+  labs(x = "Time Elapsed (seconds)", 
+       y = "Predicted Home Win Probability",
+       color = "Lead Diff", 
+       fill = "Lead Diff") +
+  theme_minimal()
+```
+
+
+## Betting Lines/ Team Rankings Data
+```{r}
+library(rvest)
+
+url_1 <- "https://www.teamrankings.com/ncaa-basketball/ranking/predictive-by-other?date=2024-11-04"
+h_1 <- read_html(url_1)
+tab_1 <- h_1 |> html_nodes("table")
+objs_1 <- tab_1 |> html_table()
+rankings_11_04 <- objs_1[[1]]
+
+# Get all the rankings data
+# 1. Build the full sequence of dates spanning your season
+all_dates <- seq(as.Date("2024-11-04"), as.Date("2025-04-07"), by = "day")
+
+# 2. Write a function that scrapes one date and returns a tibble (or NULL on failure)
+scrape_one_date <- function(date) {
+  url <- paste0("https://www.teamrankings.com/ncaa-basketball/ranking/predictive-by-other?date=", date)
+  
+  result <- tryCatch({
+    h <- read_html(url)
+    tab <- h |> html_nodes("table")
+    objs <- tab |> html_table()
+    rankings <- objs[[1]] |> mutate(rank_date = date)
+    rankings
+  }, error = function(e) {
+    message("Failed on date: ", date, " — ", e$message)
+    NULL
+  })
+  
+  Sys.sleep(1)  # be polite to the server, avoid hammering it with rapid requests
+  return(result)
+}
+
+# 3. Loop over every date, scraping one at a time
+rankings_list <- map(all_dates, scrape_one_date)
+
+# 4. Drop any failed dates (NULLs) and combine everything into one tibble
+all_rankings <- rankings_list |> 
+  compact() |>     # removes NULL entries from failed scrapes
+  bind_rows()
+
+
+# clean up team name column
+all_rankings <- all_rankings |> select(Rank, Team, Rating, rank_date) |>
+  mutate(Team = str_remove(Team, "\\s*\\(\\d+-\\d+\\)$"))
+```
+
+## Fix the mismatched names
+```{r}
+# determine if name or alt name is better to join with
+main_teams <- mbb_pbp |> distinct(home_team_name) |> pull(home_team_name)
+main_teams_alt <- mbb_pbp |> distinct(home_team_name_alt) |> pull(home_team_name_alt)
+rank_teams <- all_rankings |> distinct(Team) |> pull(Team)
+
+# teams in your main data with no match in rankings
+setdiff(main_teams, rank_teams)
+setdiff(main_teams_alt, rank_teams)
+
+
+library(fuzzyjoin)
+
+missing_teams <- setdiff(main_teams_alt, rank_teams)
+
+missing_df <- tibble(team_main = missing_teams)
+rank_df <- tibble(team_rank = rank_teams)
+
+# look through the mismatched names
+fuzzy_matches <- stringdist_join(
+  missing_df, rank_df,
+  by = c(team_main = "team_rank"),
+  method = "jw",        # Jaro-Winkler, works well for name variants
+  max_dist = 0.15,       
+  distance_col = "dist"
+) |>
+  arrange(team_main, dist)
+
+fuzzy_matches |> group_by(team_main) |> slice_min(dist, n = 1) |> print(n = 100)
+
+# Manually fix the mismatched names
+name_fixes <- tribble(
+  ~team_main,           ~team_rank,
+  "App St",         "App State",
+  "Charleston Southern",    "Charleston So",
+  "Coastal Carolina",    "Coastal Car",
+  "East Tennessee St",    "E Tennessee St",
+  "Florida International",    "Florida Intl",
+  "Georgia Southern",    "Georgia So",
+  "Loyola Chicago",    "Loyola Chi",
+  "Loyola Marymount",    "Loyola Mymt",
+  "Miami (OH)",    "Miami OH",
+  "Middle Tennessee",    "Middle Tenn",
+  "Mississippi Valley St",    "Miss Valley St",
+  "Mount St. Mary's",    "Mt St Mary's",
+  "NC St",    "NC State",
+  "North Alabama",    "N Alabama",
+  "North Carolina A&T",    "NC A&T",
+  "North Carolina Central",    "NC Central",
+  "North Texas",    "N Texas",
+  "Prairie View A&M",    "Prairie View",
+  "SIU Edwardsville",    "SIU Edward",
+  "San José St",    "San Jose St",
+  "Seattle U",    "Seattle",
+  "South Alabama",    "S Alabama",
+  "South Carolina St",    "S Carolina St",
+  "St. Bonaventure",    "St Bonaventure",
+  "St. John's",    "St John's",
+  "Texas Southern",    "Texas So",
+  "UAlbany",    "Albany",
+  "UNC Asheville",    "NC Asheville",
+  "UNC Greensboro",    "NC Greensboro",
+  "UNC Wilmington",    "NC Wilmington",
+  "UT Rio Grande Valley",    "UT Rio Grande",
+  "West Georgia",    "W Georgia"
+  
+)
+
+mbb_pbp |>
+  left_join(name_fixes, by = c("home_team_name_alt" = "team_main")) |>
+  mutate(home_team_join = coalesce(team_rank, home_team_name_alt)) |>
+  select(-team_rank)
+```
+
+## Joining team ranking variables with mbb_pbp
+```{r}
+# add new home and away team names
+mbb_pbp_rank <- mbb_pbp |>
+  left_join(name_fixes, by = c("home_team_name_alt" = "team_main")) |>
+  mutate(home_team_join = coalesce(team_rank, home_team_name_alt)) |>
+  select(-team_rank) |>
+  left_join(name_fixes, by = c("away_team_name_alt" = "team_main")) |>
+  mutate(away_team_join = coalesce(team_rank, away_team_name_alt)) |>
+  select(-team_rank)
+
+
+library(data.table)
+
+main_dt <- as.data.table(mbb_pbp_rank)
+rank_dt <- as.data.table(all_rankings)  # has Team, Rating, Rank, rank_date
+
+setkey(rank_dt, Team, rank_date)
+
+# home team ratings
+setkey(main_dt, home_team_join, game_date)  # adjust game_date to your actual date column
+main_dt <- rank_dt[main_dt, on = .(Team = home_team_join, rank_date = game_date), roll = TRUE]
+setnames(main_dt, c("Rating", "Rank"), c("home_rating", "home_rank"))
+main_dt[, Team := NULL]  # drop the join key column, no longer needed
+
+# away team ratings
+setkey(main_dt, away_team_join, rank_date)  # rank_date currently holds game_date here
+main_dt <- rank_dt[main_dt, on = .(Team = away_team_join, rank_date = rank_date), roll = TRUE]
+setnames(main_dt, c("Rating", "Rank"), c("away_rating", "away_rank"))
+main_dt[, Team := NULL]
+
+# add the time, lead, home win columns first, and game_date got removed
+final_data <- main_dt |>
+  as_tibble() |>
+  mutate(rating_diff = home_rating - away_rating) |>
+  select(game_id, game_date, time_elapsed, lead_diff, home_win, rating_diff)
+```
+
+
+# 6/23 Bayesian Logistic Model with Ratings Data
+
+## Attempt 2: Joining pbp with rankings data
+```{r}
+library(tidyverse)
+library(fuzzyjoin)
+library(data.table)
+
+## ---- STEP 1: your existing play-by-play cleaning ----
+mbb_pbp_2025 <- mbb_pbp |>
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining,
+         lead_diff = home_score - away_score)
+
+mbb_pbp_2025 <- mbb_pbp_2025 |> 
+  group_by(game_id) |>
+  mutate(
+    home_win = if_else(
+      is.na(end_game_seconds_remaining) & home_score > away_score, 1, 0
+    )) |>
+  mutate(home_win = max(home_win)) |>
+  ungroup()
+
+mbb_pbp_2025 <- mbb_pbp_2025 |> 
+  mutate(
+    time_elapsed = if_else(is.na(time_elapsed), 2400, time_elapsed),
+    end_game_seconds_remaining = if_else(is.na(end_game_seconds_remaining), 0, end_game_seconds_remaining)
+  )
+
+## keep the columns you need for the ranking join too — adjust names as needed
+mbb_pbp_2025 <- mbb_pbp_2025 |>
+  select(game_id, game_date, home_team_name_alt, away_team_name_alt,
+         time_elapsed, lead_diff, home_win)
+
+## ---- STEP 2: clean rankings data ----
+all_rankings <- all_rankings |> 
+  select(Rank, Team, Rating, rank_date) |>
+  mutate(Team = str_remove(Team, "\\s*\\(\\d+-\\d+\\)$"))
+
+## ---- STEP 3: fix mismatched team names ----
+name_fixes <- tribble(
+  ~team_main,                  ~team_rank,
+  "App St",                    "App State",
+  "Charleston Southern",       "Charleston So",
+  "Coastal Carolina",          "Coastal Car",
+  "East Tennessee St",         "E Tennessee St",
+  "Florida International",     "Florida Intl",
+  "Georgia Southern",          "Georgia So",
+  "Loyola Chicago",            "Loyola Chi",
+  "Loyola Marymount",          "Loyola Mymt",
+  "Miami (OH)",                "Miami OH",
+  "Middle Tennessee",          "Middle Tenn",
+  "Mississippi Valley St",     "Miss Valley St",
+  "Mount St. Mary's",          "Mt St Mary's",
+  "NC St",                     "NC State",
+  "North Alabama",             "N Alabama",
+  "North Carolina A&T",        "NC A&T",
+  "North Carolina Central",    "NC Central",
+  "North Texas",               "N Texas",
+  "Prairie View A&M",          "Prairie View",
+  "SIU Edwardsville",          "SIU Edward",
+  "San José St",               "San Jose St",
+  "Seattle U",                 "Seattle",
+  "South Alabama",             "S Alabama",
+  "South Carolina St",         "S Carolina St",
+  "St. Bonaventure",           "St Bonaventure",
+  "St. John's",                "St John's",
+  "Texas Southern",            "Texas So",
+  "UAlbany",                   "Albany",
+  "UNC Asheville",             "NC Asheville",
+  "UNC Greensboro",            "NC Greensboro",
+  "UNC Wilmington",            "NC Wilmington",
+  "UT Rio Grande Valley",      "UT Rio Grande",
+  "West Georgia",              "W Georgia",
+  "Florida Gulf Coast",     "FGCU",
+  "Northern Arizona",     "N Arizona",
+  "Ole Miss",     "Mississippi",
+  "American University",     "American",
+  "UC San Diego",     "UCSD",
+  "George Washington",     "G Washington",
+  "Bethune-Cookman",     "Bethune",
+  "Abilene Christian",     "Abl Christian",
+  "Cal St",     "CS Northridge",
+  "East Carolina",     "E Carolina",
+  "California Baptist",     "Cal Baptist",
+  "Massachusetts",     "UMass",
+  "UC Santa Barbara",     "UCSB",
+  "Northern Colorado",     "N Colorado",
+  "Southern Utah",     "S Utah",
+  "Central Connecticut",     "C Connecticut",
+  "Western Kentucky",     "W Kentucky",
+  "Northwestern St",     "NW State",
+  "Texas A&M-Corpus Christi",     "Texas A&M-CC",
+  "James Madison",     "J Madison",
+  "Long Island University",     "LIU",
+  "Mt St. Mary's",     "Mt St Mary's",
+  "Arkansas-Pine Bluff",     "AR-Pine Bluff",
+  "Southeast Missouri St",     "SE Missouri St",
+  "St. Thomas-Minnesota",     "St Thomas",
+  "North Dakota St",     "N Dakota St",
+  "Central Michigan",     "C Michigan",
+  "South Dakota St",     "S Dakota St",
+  "Northern Iowa",     "N Iowa",
+  "Southern Illinois",     "S Illinois",
+  "Boston University",     "Boston U",
+  "UIC",     "Illinois Chicago",
+  "Tennessee Tech",     "Tenn Tech",
+  "Saint Francis",     "St Francis PA",
+  "Fairleigh Dickinson",     "F Dickinson",
+  "Loyola Maryland",     "Loyola MD",
+  "Northern Kentucky",     "N Kentucky",
+  "Western Michigan",     "W Michigan",
+  "Northern Illinois",     "N Illinois",
+  "Stephen F. Austin",     "SF Austin",
+  "East Texas A&M",     "E Texas A&M",
+  "South Florida",     "S Florida",
+  "South Carolina Upstate",     "SC Upstate",
+  "IU Indianapolis",     "IU Indy",
+  "Maryland Eastern Shore",     "Maryland ES",
+  "Eastern Illinois",     "E Illinois",
+  "Eastern Washington",     "E Washington",
+  "Eastern Michigan",     "E Michigan",
+  "Purdue Fort Wayne",     "Purdue FW",
+  "North Florida",     "N Florida",
+  "Western Carolina",     "W Carolina",
+  "Western Illinois",     "W Illinois",
+  "Central Arkansas",     "C Arkansas",
+  "Houston Christian",     "Hou Christian",
+  "Pennsylvania",     "Penn",
+  "Southern Indiana",     "S Indiana",
+  "Queens University",     "Queens",
+  "Eastern Kentucky",     "E Kentucky"
+)
+
+mbb_pbp_2025 <- mbb_pbp_2025 |>
+  left_join(name_fixes, by = c("home_team_name_alt" = "team_main")) |>
+  mutate(home_team_join = coalesce(team_rank, home_team_name_alt)) |>
+  select(-team_rank) |>
+  left_join(name_fixes, by = c("away_team_name_alt" = "team_main")) |>
+  mutate(away_team_join = coalesce(team_rank, away_team_name_alt)) |>
+  select(-team_rank)
+
+all_rankings <- all_rankings |> 
+  filter(!Team %in% c("NW St", "Mt St. Mary's"))
+
+## ---- STEP 4 (do this before the join): handle remaining non-D1 teams ----
+## After fixes, check what's still unmatched:
+rank_teams <- all_rankings |> distinct(Team) |> pull(Team)
+still_missing_home <- setdiff(unique(mbb_pbp_2025$home_team_join), rank_teams)
+still_missing_away <- setdiff(unique(mbb_pbp_2025$away_team_join), rank_teams)
+still_missing <- union(still_missing_home, still_missing_away)
+still_missing  # review this list — confirm these are genuinely non-D1
+
+
+
+
+## once confirmed, append a fallback rating for them into all_rankings
+## so the rolling join below has something to find
+min_rating <- min(all_rankings$Rating, na.rm = TRUE)
+
+non_d1_fill <- tibble(
+  Team = still_missing,
+  Rating = min_rating - 1,
+  Rank = NA_integer_,
+  rank_date = min(all_rankings$rank_date)  # so it's always available for rolling join
+)
+
+all_rankings <- bind_rows(all_rankings, non_d1_fill)
+
+## ---- STEP 5: rolling join on date, for both home and away ----
+main_dt <- as.data.table(mbb_pbp_2025)
+rank_dt <- as.data.table(all_rankings)
+
+setkey(rank_dt, Team, rank_date)
+
+# home team ratings
+setkey(main_dt, home_team_join, game_date)
+main_dt <- rank_dt[main_dt, on = .(Team = home_team_join, rank_date = game_date), roll = TRUE]
+setnames(main_dt, c("Rating", "Rank"), c("home_rating", "home_rank"))
+main_dt[, Team := NULL]
+
+# away team ratings — note rank_date currently holds game_date from the prior join
+setkey(main_dt, away_team_join, rank_date)
+main_dt <- rank_dt[main_dt, on = .(Team = away_team_join, rank_date = rank_date), roll = TRUE]
+setnames(main_dt, c("Rating", "Rank"), c("away_rating", "away_rank"))
+main_dt[, Team := NULL]
+
+## ---- STEP 6: build rating_diff and trim to final columns ----
+final_data <- main_dt |>
+  as_tibble() |>
+  mutate(rating_diff = home_rating - away_rating) |>
+  select(game_id, time_elapsed, lead_diff, home_win, rating_diff)
+
+## sanity checks before trusting it
+sum(is.na(final_data$rating_diff))   # should be 0 (or very close) if joins worked
+final_data |> filter(game_id == final_data$game_id[1])  # spot-check one game by hand
+# check one game at a time
+View(final_data |> filter(game_id == 401746082))
+View(mbb_pbp |> filter(game_id == 401727065))
+
+# check rating for mt st marys and nw st
+all_rankings |> filter(str_detect(Team, "NW|Northwestern")) |> distinct(Team)
+all_rankings |> filter(str_detect(Team, "Mt St|Mount St")) |> distinct(Team)
+
+# check if they have actual rows with ratings
+View(all_rankings |> filter(Team == "Baylor"))
+View(all_rankings |> filter(Team == "Mt St Mary's"))
+
+# see what home_team_join actually says for these teams
+mbb_pbp_2025 |> 
+  filter(str_detect(home_team_name_alt, "NW|Northwestern|Mount|Mt St")) |>
+  distinct(home_team_name_alt, home_team_join)
+
+mbb_pbp_2025 |> 
+  filter(str_detect(away_team_name_alt, "NW|Northwestern|Mount|Mt St")) |>
+  distinct(away_team_name_alt, away_team_join)
+
+```
+
+
+## Bayesian logistic model with final_data
+```{r}
+# 1 row for 1 second, no duplicates
+final_data <- final_data |> 
+  group_by(game_id) |> 
+  complete(time_elapsed = 0:2400) |> 
+  fill(lead_diff, home_win, rating_diff, .direction = "down") |> 
+  ungroup() |> 
+  arrange(game_id, time_elapsed, desc(row_number())) |>
+  distinct(game_id, time_elapsed, .keep_all = TRUE)
+
+
+# Data Subset
+set.seed(123)
+
+unique_games <- final_data |> distinct(game_id) |> pull(game_id)
+
+selected_games <- sample(unique_games, 50)
+
+# subset of 50 games
+subset_games <- final_data |> 
+  filter(game_id %in% selected_games) |>
+  filter(time_elapsed %% 24 == 0)
+
+# scale time and score so algorithm runs better
+subset_games <- subset_games |>
+  mutate(
+    time_scaled = time_elapsed / 2400,
+    lead_scaled = lead_diff / 50,
+    ratings_scaled = rating_diff / 50
+  )
+
+
+# Model
+brm_mod <- brm(home_win ~ lead_diff + time_elapsed + rating_diff + time_elapsed:lead_diff + time_elapsed:rating_diff,
+  data = subset_games,
+  family = bernoulli(),
+  prior = c(prior(normal(0, 2), class = "Intercept"))
+)
+
+plot(brm_mod)
+summary(brm_mod)
+round(fixef(brm_mod), 4)
+
+# Plot
+# model predictions
+preds_brm_mod <- ggpredict(brm_mod, terms = c("time_elapsed [300:2400 by=10]", 
+                             "lead_diff [-10, -5, 0, 5, 10]")) |>
+  as.data.frame(terms_to_colnames = TRUE) |>
+  as_tibble()
+
+# visualization
+# start at 5 min, lead diff order was flipped before, maybe b/c not enough data
+ggplot(preds_brm_mod, aes(x = time_elapsed, y = predicted, 
+                          color = factor(lead_diff))) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = factor(lead_diff)),
+              alpha = 0.25, color = NA) +
+  geom_line(linewidth = 1.5) +
+  scale_colour_viridis_d(option = "D") +
+  scale_fill_viridis_d(option = "D") +
+  labs(x = "Time Elapsed (seconds)", 
+       y = "Predicted Home Win Probability",
+       color = "Lead Diff", 
+       fill = "Lead Diff") +
+  theme_minimal()
+```
+
+
+
+
+
