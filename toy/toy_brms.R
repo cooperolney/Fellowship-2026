@@ -18,6 +18,12 @@ fake_model <- brm(win ~ score_diff + time + time:score_diff,
 )
 
 plot(fake_model)
+
+# compare with frequentist logistic regression
+fake_glm_model <- glm(win ~ score_diff + time + time:score_diff,
+                      data = fake_data, family = "binomial")
+plot(fake_glm_model)
+
 ## should see these distribution's centers match (approximately)
 ## with what you find from the basic logistic regression.
 
