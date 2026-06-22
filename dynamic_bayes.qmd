@@ -1,0 +1,66 @@
+---
+title: "dynamic_bayes"
+format: html
+---
+
+```{r}
+library(tidyverse)
+library(brms)
+```
+
+```{r}
+# Load in 2026 season pbp data
+mbb_pbp <-  hoopR::load_mbb_pbp()
+```
+
+# 2026 Season Data
+```{r}
+# Clean data
+# create new vars: time_elapsed and lead_diff
+mbb_pbp_2026 <- mbb_pbp |>
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining,
+         lead_diff = home_score - away_score)
+
+# create new var: home_win
+mbb_pbp_2026 <- mbb_pbp_2026 |> group_by(game_id) |>
+  mutate(
+    home_win = if_else(
+      is.na(end_game_seconds_remaining) & home_score > away_score, 1, 0
+    )) |>
+  mutate(home_win = max(home_win)) |>
+  ungroup(game_id)
+
+# fill in the NAs
+mbb_pbp_2026 <- mbb_pbp_2026 |> mutate(
+  time_elapsed = if_else(is.na(time_elapsed), 2400, time_elapsed),
+  end_game_seconds_remaining = if_else(is.na(end_game_seconds_remaining), 0, end_game_seconds_remaining)
+)
+
+# only need these columns
+mbb_pbp_2026 <- mbb_pbp_2026 |>
+  select(game_id, time_elapsed, lead_diff, home_win)
+
+# 1 row for 1 second, no duplicates
+mbb_pbp_2026 <- mbb_pbp_2026 |> 
+  group_by(game_id) |> 
+  complete(time_elapsed = 0:2400) |> 
+  fill(lead_diff, home_win, .direction = "down") |> 
+  ungroup() |> 
+  arrange(game_id, time_elapsed, desc(row_number())) |>
+  distinct(game_id, time_elapsed, .keep_all = TRUE)
+```
+
+# Count games in each window
+```{r}
+grid <- expand_grid(t = 0:2400, l = -50:50)
+
+library(fuzzyjoin)
+
+
+```
+
+
+
+
+
+
