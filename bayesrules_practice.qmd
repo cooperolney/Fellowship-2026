@@ -202,14 +202,15 @@ plot_beta_binomial(alpha = 0.5, beta = 1, y = 4, n = 10)
 summarize_beta_binomial(alpha = 10, beta = 2, y = 10, n = 20)
 ```
 
-
 # Chapter 6: Approximating the Posterior
+
 ```{r}
 library(rstan)
 library(bayesplot)
 ```
 
 ## 6.1 Grid Approximation
+
 ```{r}
 # Beta Binomial Example
 
@@ -345,13 +346,14 @@ bb_sim <- stan(model_code = bb_model, data = list(Y = 9),
 ```
 
 ## 6.3 Markov chain diagnostics
+
 ```{r}
 # Calculate the effective sample size ratio
 neff_ratio(bb_sim, pars = c("pi"))
 ```
 
-
 # Chapter 8: Posterior Inference and Prediction
+
 ```{r}
 # Load packages
 library(bayesrules)
@@ -372,6 +374,7 @@ plot_beta_binomial(alpha = 4, beta = 6, y = 14, n = 100)
 ```
 
 ## 8.4 Posterior Analysis with MCMC
+
 ```{r}
 # STEP 1: DEFINE the model
 art_model <- "
@@ -395,9 +398,3 @@ art_sim <- stan(model_code = art_model, data = list(Y = 14),
 plot_beta(alpha = 18, beta = 92) + 
   lims(x = c(0, 0.35))
 ```
-
-
-
-
-
-

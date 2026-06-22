@@ -36,16 +36,16 @@ print(object.size(mbb_pbp_2026), units = "auto")
 ```{r}
 # only keep important cols and add time_elapsed and lead_diff 
 mbb_pbp_2026 <- mbb_pbp |> select(
-  game_id, home_score, away_score, start_game_seconds_remaining, scoring_play, score_value, home_team_name, away_team_name, season_type, period_number, game_date 
+  game_id, home_score, away_score, end_game_seconds_remaining, scoring_play, score_value, home_team_name, away_team_name, season_type, period_number, game_date 
   ) |>
-  mutate(time_elapsed = 2400 - start_game_seconds_remaining,
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining,
          lead_diff = home_score - away_score)
 ```
 
 ```{r}
 # duke vs uconn game
 duke_uconn <- mbb_pbp_2026 |> 
-  filter(home_team_abbrev == "DUKE" & away_team_abbrev == "CONN")
+  filter(home_team_name == "Duke" & away_team_name == "UConn")
 
 ```
 
@@ -103,7 +103,7 @@ ot_game <- mbb_pbp_2026 |>
   filter(home_team_name == "Kentucky" & away_team_name == "Santa Clara") |>
   relocate(time_elapsed) |> arrange(desc(time_elapsed))
 # for time elapsed there is one NA value
-# then when in ot, start_game_seconds_remaining resets to 300 (5 mins), 
+# then when in ot, end_game_seconds_remaining resets to 300 (5 mins), 
 # for example then there are two very different game scores when time elapsed is 2400, it is 73-73 and 89-84
 
 ot_game |>
@@ -128,16 +128,16 @@ tictoc::toc()
 ```{r}
 # create new vars: time_elapsed & lead_diff
 mbb_pbp_2025 <- mbb_pbp_2025 |> select(
-  game_id, home_score, away_score, start_game_seconds_remaining, scoring_play, score_value, home_team_name, away_team_name, season_type, period_number, game_date 
+  game_id, home_score, away_score, end_game_seconds_remaining, scoring_play, score_value, home_team_name, away_team_name, season_type, period_number, game_date 
   ) |>
-  mutate(time_elapsed = 2400 - start_game_seconds_remaining,
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining,
          lead_diff = home_score - away_score)
 
 # create new var: home_win
 mbb_pbp_2025 <- mbb_pbp_2025 |> group_by(game_id) |>
   mutate(
     home_win = if_else(
-      is.na(start_game_seconds_remaining) & home_score > away_score, 1, 0
+      is.na(end_game_seconds_remaining) & home_score > away_score, 1, 0
     )) |>
   mutate(home_win = max(home_win)) |>
   ungroup(game_id)
@@ -145,7 +145,7 @@ mbb_pbp_2025 <- mbb_pbp_2025 |> group_by(game_id) |>
 # fill in the NAs
 mbb_pbp_2025 <- mbb_pbp_2025 |> mutate(
   time_elapsed = if_else(is.na(time_elapsed), 2400, time_elapsed),
-  start_game_seconds_remaining = if_else(is.na(start_game_seconds_remaining), 0, start_game_seconds_remaining)
+  end_game_seconds_remaining = if_else(is.na(end_game_seconds_remaining), 0, end_game_seconds_remaining)
 )
 ```
 
@@ -208,7 +208,7 @@ duke_uconn <- mbb_pbp_2026 |>
   filter(home_team_name == "Duke" & away_team_name == "UConn") |>
   mutate(
   time_elapsed = if_else(is.na(time_elapsed), 2400, time_elapsed),
-  start_game_seconds_remaining = if_else(is.na(start_game_seconds_remaining), 0, start_game_seconds_remaining)
+  end_game_seconds_remaining = if_else(is.na(end_game_seconds_remaining), 0, end_game_seconds_remaining)
 ) |>
   mutate(
     predicted = predict(log_mod, newdata = pick(everything()), type = "response"
@@ -249,16 +249,16 @@ mbb_pbp |> summarise(
 mbb_pbp <-  hoopR::load_mbb_pbp()
 
 mbb_pbp_2026 <- mbb_pbp |> select(
-  game_id, home_score, away_score, start_game_seconds_remaining, scoring_play, score_value, home_team_name, away_team_name, season_type, period_number, game_date 
+  game_id, home_score, away_score, end_game_seconds_remaining, scoring_play, score_value, home_team_name, away_team_name, season_type, period_number, game_date 
   ) |>
-  mutate(time_elapsed = 2400 - start_game_seconds_remaining,
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining,
          lead_diff = home_score - away_score)
 
 duke_uconn <- mbb_pbp_2026 |> 
   filter(home_team_name == "Duke" & away_team_name == "UConn") |>
   mutate(
   time_elapsed = if_else(is.na(time_elapsed), 2400, time_elapsed),
-  start_game_seconds_remaining = if_else(is.na(start_game_seconds_remaining), 0, start_game_seconds_remaining)
+  end_game_seconds_remaining = if_else(is.na(end_game_seconds_remaining), 0, end_game_seconds_remaining)
 )
 ```
 
