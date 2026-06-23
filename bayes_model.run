@@ -1,0 +1,19 @@
+#!/bin/bash
+#SBATCH --job-name=dawn_aci               # What to show in squeue
+#SBATCH --mail-type=END,FAIL            # When to send mail (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=mhigham@stlawu.edu  # Where to send mail
+#SBATCH --mem=32gb                      # How much memory to request
+#SBATCH --time=09-03:45:00
+#SBATCH --output=log%j.txt              # Where to save the output
+#SBATCH -n 1                            # Allocate 1 node
+
+echo -n "STARTED JOB AT: "
+date
+echo ""
+
+module load R
+Rscript /home/higham/soundscape/dawn_aci.R
+
+echo -n "FINISHED JOB AT: "
+date
+echo ""
