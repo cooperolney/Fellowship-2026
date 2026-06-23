@@ -1,5 +1,14 @@
 # Task List
 
+## Tasks for 6/26
+
+1. Pick a game and create a predicted probability graph through time with either the MLE or the logistic model or both (save dynamic Bayes for later).
+
+2. Start messing around with closeread (picture-in-picture using CSS).
+
+3. Trying the models on the full data set on ada.
+
+
 ## Tasks for 6/23
 
 1. Continue working on getting ratings into a joined data set.
