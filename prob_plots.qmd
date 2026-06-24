@@ -1,0 +1,155 @@
+---
+title: "prob_plots"
+format: html
+---
+
+# 6/26 Task: Pick a game and create a predicted probability graph through time with either MLE or the logistic model or both (dynamic bayes later).
+
+```{r}
+# Load in 2025 season pbp data
+mbb_pbp <-  hoopR::load_mbb_pbp(seasons = 2025)
+```
+
+## Clean Data
+
+```{r}
+# Clean data for MLE
+
+# create new vars: time_elapsed and lead_diff
+mbb_pbp_2025 <- mbb_pbp |>
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining,
+         lead_diff = home_score - away_score)
+
+# create new var: home_win
+mbb_pbp_2025 <- mbb_pbp_2025 |> group_by(game_id) |>
+  mutate(
+    home_win = if_else(
+      is.na(end_game_seconds_remaining) & home_score > away_score, 1, 0
+    )) |>
+  mutate(home_win = max(home_win)) |>
+  ungroup(game_id)
+
+# fill in the NAs
+mbb_pbp_2025 <- mbb_pbp_2025 |> mutate(
+  time_elapsed = if_else(is.na(time_elapsed), 2400, time_elapsed),
+  end_game_seconds_remaining = if_else(is.na(end_game_seconds_remaining), 0, end_game_seconds_remaining)
+)
+
+# only need these columns
+mbb_pbp_2025 <- mbb_pbp_2025 |>
+  select(game_id, time_elapsed, lead_diff, home_win)
+
+# works after 1 min, 14 million rows
+mbb_pbp_2025_clean <- mbb_pbp_2025 |> 
+  group_by(game_id) |> 
+  complete(time_elapsed = 0:2400) |> 
+  fill(lead_diff, home_win, .direction = "down") |> 
+  ungroup() |> 
+  arrange(game_id, time_elapsed, desc(row_number())) |>
+  distinct(game_id, time_elapsed, .keep_all = TRUE)
+
+
+```
+
+```{r}
+# MLE calculation with cleaned data
+mle_clean <- mbb_pbp_2025_clean |>
+  group_by(time_elapsed, lead_diff) |>
+  summarise(
+    n_games = n(),
+    n_wins = sum(home_win),
+    win_prob = n_wins / n_games
+  ) |>
+  filter(n_games >= 1)
+```
+
+```{r}
+# Load in 2026 season pbp data
+mbb_pbp_2026 <-  hoopR::load_mbb_pbp()
+```
+
+```{r}
+# Clean data for duke uconn game
+
+# create new vars: time_elapsed and lead_diff
+duke_uconn <- mbb_pbp_2026 |>
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining,
+         lead_diff = home_score - away_score) |>
+  filter(home_team_name == "Duke" & away_team_name == "UConn")
+
+# create new var: home_win
+duke_uconn <- duke_uconn |> group_by(game_id) |>
+  mutate(
+    home_win = if_else(
+      is.na(end_game_seconds_remaining) & home_score > away_score, 1, 0
+    )) |>
+  mutate(home_win = max(home_win)) |>
+  ungroup(game_id)
+
+# fill in the NAs
+duke_uconn <- duke_uconn |> mutate(
+  time_elapsed = if_else(is.na(time_elapsed), 2400, time_elapsed),
+  end_game_seconds_remaining = if_else(is.na(end_game_seconds_remaining), 0, end_game_seconds_remaining)
+)
+
+# only need these columns
+duke_uconn <- duke_uconn |>
+  select(game_id, time_elapsed, lead_diff, home_win)
+
+# works after 1 min, 14 million rows
+duke_uconn_clean <- duke_uconn |> 
+  group_by(game_id) |> 
+  complete(time_elapsed = 0:2400) |> 
+  fill(lead_diff, home_win, .direction = "down") |> 
+  ungroup() |> 
+  arrange(game_id, time_elapsed, desc(row_number())) |>
+  distinct(game_id, time_elapsed, .keep_all = TRUE)
+
+```
+
+## MLE Duke vs UConn
+
+```{r}
+# Join MLE probabilities to Duke vs UConn
+duke_uconn_mle <- duke_uconn_clean |>
+  left_join(mle_clean, by = c("time_elapsed", "lead_diff"))
+
+# plot
+ggplot(duke_uconn_mle, aes(x = time_elapsed, y = win_prob)) +
+  geom_line() +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray") +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(title = "Duke vs UConn MLE Win Probability",
+       x = "Time Elapsed (seconds)",
+       y = "Predicted Home Win Probability (Duke)") +
+  theme_minimal()
+```
+
+## Logistic Regression Duke vs UConn
+
+```{r}
+# logistic regression model
+log_mod <- glm(home_win ~ time_elapsed + lead_diff + time_elapsed:lead_diff,
+               data = mbb_pbp_2025_clean, family = "binomial")
+
+log_mod |> tidy()
+```
+
+```{r}
+duke_uconn_log <- duke_uconn_clean |>
+  mutate(
+    win_prob = predict(log_mod, newdata = pick(everything()), type = "response"
+                        ))
+
+# plot
+ggplot(duke_uconn_log, aes(x = time_elapsed, y = win_prob)) +
+  geom_line() +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray") +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(title = "Duke vs UConn Logistic Win Probability",
+       x = "Time Elapsed (seconds)",
+       y = "Predicted Home Win Probability (Duke)") +
+  theme_minimal()
+```
+
+
