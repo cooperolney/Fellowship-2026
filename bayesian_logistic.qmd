@@ -43,7 +43,7 @@ mbb_pbp_2025 <- mbb_pbp_2025 |>
   select(game_id, time_elapsed, lead_diff, home_win)
 
 # 1 row for 1 second, no duplicates
-mbb_pbp_2025 <- mbb_pbp_2025 |> 
+mbb_pbp_2025_clean <- mbb_pbp_2025 |> 
   group_by(game_id) |> 
   complete(time_elapsed = 0:2400) |> 
   fill(lead_diff, home_win, .direction = "down") |> 
@@ -56,12 +56,12 @@ mbb_pbp_2025 <- mbb_pbp_2025 |>
 ```{r}
 set.seed(123)
 
-unique_games <- mbb_pbp_2025 |> distinct(game_id) |> pull(game_id)
+unique_games <- mbb_pbp_2025_clean |> distinct(game_id) |> pull(game_id)
 
 selected_games <- sample(unique_games, 50)
 
 # subset of 50 games
-subset_games <- mbb_pbp_2025 |> 
+subset_games <- mbb_pbp_2025_clean |> 
   filter(game_id %in% selected_games) |>
   filter(time_elapsed %% 24 == 0)
 
@@ -99,7 +99,7 @@ summary(brm_mod_scaled)
 ## Compare to Frequentist Logistic Regression
 ```{r}
 log_mod <- glm(home_win ~ time_elapsed + lead_diff + time_elapsed:lead_diff,
-               data = mbb_pbp_2025, family = "binomial")
+               data = mbb_pbp_2025_clean, family = "binomial")
 
 tidy(log_mod)
 ```
@@ -125,7 +125,18 @@ ggplot(preds_brm_mod, aes(x = time_elapsed, y = predicted,
        y = "Predicted Home Win Probability",
        color = "Lead Diff", 
        fill = "Lead Diff") +
-  theme_minimal()
+  theme_minimal() +
+  theme(axis.title = element_text(size = 16),
+        axis.text = element_text(size = 10),
+        legend.title = element_text(size = 16),
+        legend.text = element_text(size = 10))
+
+
+# model predictions
+preds_log_mod <- ggpredict(log_mod, terms = c("time_elapsed [0:2400 by=10]", 
+                             "lead_diff [-15, -10, -5, 0, 5, 10, 15]")) |>
+  as.data.frame(terms_to_colnames = TRUE) |>
+  as_tibble()
 
 # frequentist logistic regression visualization
 ggplot(preds_log_mod, aes(x = time_elapsed, y = predicted, 
@@ -139,7 +150,11 @@ ggplot(preds_log_mod, aes(x = time_elapsed, y = predicted,
        y = "Predicted Home Win Probability",
        color = "Lead Diff", 
        fill = "Lead Diff") +
-  theme_minimal()
+  theme_minimal() +
+  theme(axis.title = element_text(size = 16),
+        axis.text = element_text(size = 10),
+        legend.title = element_text(size = 16),
+        legend.text = element_text(size = 10))
 ```
 
 
@@ -557,7 +572,7 @@ subset_games <- subset_games |>
 
 
 # Model
-brm_mod <- brm(home_win ~ lead_diff + time_elapsed + rating_diff + time_elapsed:lead_diff + time_elapsed:rating_diff,
+brm_mod_rank <- brm(home_win ~ lead_diff + time_elapsed + rating_diff + time_elapsed:lead_diff + time_elapsed:rating_diff,
   data = subset_games,
   family = bernoulli(),
   prior = c(prior(normal(0, 2), class = "Intercept"))
@@ -565,18 +580,18 @@ brm_mod <- brm(home_win ~ lead_diff + time_elapsed + rating_diff + time_elapsed:
 
 plot(brm_mod)
 summary(brm_mod)
-round(fixef(brm_mod), 4)
+round(fixef(brm_mod_rank), 4)
 
 # Plot
 # model predictions
-preds_brm_mod <- ggpredict(brm_mod, terms = c("time_elapsed [300:2400 by=10]", 
-                             "lead_diff [-10, -5, 0, 5, 10]")) |>
+preds_brm_mod_rank <- ggpredict(brm_mod_rank, terms = c("time_elapsed [0:2400 by=10]", 
+                             "lead_diff [-15, -10, -5, 0, 5, 10, 15]")) |>
   as.data.frame(terms_to_colnames = TRUE) |>
   as_tibble()
 
 # visualization
 # start at 5 min, lead diff order was flipped before, maybe b/c not enough data
-ggplot(preds_brm_mod, aes(x = time_elapsed, y = predicted, 
+ggplot(preds_brm_mod_rank, aes(x = time_elapsed, y = predicted, 
                           color = factor(lead_diff))) +
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = factor(lead_diff)),
               alpha = 0.25, color = NA) +
@@ -587,7 +602,12 @@ ggplot(preds_brm_mod, aes(x = time_elapsed, y = predicted,
        y = "Predicted Home Win Probability",
        color = "Lead Diff", 
        fill = "Lead Diff") +
-  theme_minimal()
+  theme_minimal()  +
+  theme(axis.title = element_text(size = 16),
+        axis.text = element_text(size = 10),
+        legend.title = element_text(size = 16),
+        legend.text = element_text(size = 10))
+  
 ```
 
 

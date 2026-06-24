@@ -9,8 +9,8 @@ library(tidyverse)
 
 
 ```{r}
-# Load in 2026 season pbp data
-mbb_pbp <-  hoopR::load_mbb_pbp()
+# Load in 2025 season pbp data
+mbb_pbp <-  hoopR::load_mbb_pbp(seasons = 2025)
 ```
 
 # Basic MLE Heatmap
@@ -66,7 +66,7 @@ ggplot(mle_heatmap, aes(x = time_elapsed, y = lead_diff, fill = win_prob)) +
 
 # Clean MLE Heatmap
 ```{r}
-# clean 2026 season data, 1 row for 1 second, no duplicates
+# clean 2025 season data, 1 row for 1 second, no duplicates
 
 # works after 5 mins
 mbb_pbp_2025_clean <- mbb_pbp_2025 |>
@@ -77,7 +77,7 @@ mbb_pbp_2025_clean <- mbb_pbp_2025 |>
   filter(row_number() == n()) |> # same as slice_tail(n=1)
   ungroup()
 
-# works after 1 min
+# works after 1 min, 14 million rows
 mbb_pbp_2025_clean <- mbb_pbp_2025 |> 
   group_by(game_id) |> 
   complete(time_elapsed = 0:2400) |> 
