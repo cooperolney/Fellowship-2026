@@ -192,3 +192,60 @@ ggplot(dynamic_bayes_heatmap, aes(x = time_elapsed, y = lead_diff, fill = win_pr
 ```
 
 
+## .rds file from ada
+
+```{r}
+# this is just for 50 games, same as above
+db_test <- readRDS("dynamic_bayes.rds")
+```
+
+```{r}
+# 25% of the dataset, 1534 games
+db_quarter <- readRDS("dynamic_bayes_quarter.rds")
+
+ggplot(db_quarter, aes(x = time_elapsed, y = lead_diff, fill = win_prob)) +
+  geom_tile() +
+  scale_fill_gradientn(colors = c("blue", "green", "white", "yellow", "red")) +
+  labs(
+    x = "Time elapsed (seconds)", 
+    y = "Score differential",
+    fill = "p"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+# 50% of the dataset, 3068 games
+db_half <- readRDS("dynamic_bayes_half.rds")
+
+ggplot(db_half, aes(x = time_elapsed, y = lead_diff, fill = win_prob)) +
+  geom_tile() +
+  scale_fill_gradientn(colors = c("blue", "green", "white", "yellow", "red")) +
+  labs(
+    x = "Time elapsed (seconds)", 
+    y = "Score differential",
+    fill = "p"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+# All of the dataset, 6136 games
+db_full <- readRDS("dynamic_bayes_full.rds")
+
+ggplot(db_full, aes(x = time_elapsed, y = lead_diff, fill = win_prob)) +
+  geom_tile() +
+  scale_fill_gradientn(colors = c("blue", "green", "white", "yellow", "red")) +
+  labs(
+    x = "Time elapsed (seconds)", 
+    y = "Score differential",
+    fill = "p"
+  ) +
+  theme_minimal()
+```
+
+
+
+
+
+
