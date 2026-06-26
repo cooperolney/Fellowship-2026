@@ -1,5 +1,14 @@
 # Task List
 
+## Tasks for 6/30
+
+1. Start messing around with closeread (picture-in-picture using CSS).
+
+2. Pick a couple of additional games and create a predicted probability graph through time with either the MLE or the logistic model or both (save dynamic Bayes for later).
+
+3. Make a function for the predicted probability generation. Inputs can be: type of model (a few if else {} statements for each model type) and the game id, output would be a data frame with predicted probability for each row.
+
+
 ## Tasks for 6/26
 
 1. Pick a game and create a predicted probability graph through time with either the MLE or the logistic model or both (save dynamic Bayes for later).
