@@ -549,6 +549,9 @@ final_data <- final_data |>
   arrange(game_id, time_elapsed, desc(row_number())) |>
   distinct(game_id, time_elapsed, .keep_all = TRUE)
 
+# save final data
+# saveRDS(final_data, file = "final_data.rds")
+
 
 # Data Subset
 set.seed(123)
@@ -608,6 +611,68 @@ ggplot(preds_brm_mod_rank, aes(x = time_elapsed, y = predicted,
         legend.title = element_text(size = 16),
         legend.text = element_text(size = 10))
   
+```
+
+
+## .rds file from ada
+
+```{r}
+# this is just for 50 games, same as above
+log_test <- readRDS("bayesian_logistic.rds")
+```
+
+```{r}
+# 25% of the dataset, 1534 games
+log_quarter <- readRDS("bayesian_logistic_quarter.rds")
+
+ggplot(log_quarter, aes(x = time_elapsed, y = predicted, 
+                          color = factor(lead_diff))) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = factor(lead_diff)),
+              alpha = 0.25, color = NA) +
+  geom_line(linewidth = 1.5) +
+  scale_colour_viridis_d(option = "D") +
+  scale_fill_viridis_d(option = "D") +
+  labs(x = "Time Elapsed (seconds)", 
+       y = "Predicted Home Win Probability",
+       color = "Lead Diff", 
+       fill = "Lead Diff") +
+  theme_minimal()
+```
+
+```{r}
+# 50% of the dataset, 3068 games
+log_half <- readRDS("bayesian_logistic_half.rds")
+
+ggplot(log_half, aes(x = time_elapsed, y = predicted, 
+                          color = factor(lead_diff))) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = factor(lead_diff)),
+              alpha = 0.25, color = NA) +
+  geom_line(linewidth = 1.5) +
+  scale_colour_viridis_d(option = "D") +
+  scale_fill_viridis_d(option = "D") +
+  labs(x = "Time Elapsed (seconds)", 
+       y = "Predicted Home Win Probability",
+       color = "Lead Diff", 
+       fill = "Lead Diff") +
+  theme_minimal()
+```
+
+```{r}
+# All of the dataset, 6136 games
+log_full <- readRDS("bayesian_logistic_full.rds")
+
+ggplot(log_full, aes(x = time_elapsed, y = predicted, 
+                          color = factor(lead_diff))) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = factor(lead_diff)),
+              alpha = 0.25, color = NA) +
+  geom_line(linewidth = 1.5) +
+  scale_colour_viridis_d(option = "D") +
+  scale_fill_viridis_d(option = "D") +
+  labs(x = "Time Elapsed (seconds)", 
+       y = "Predicted Home Win Probability",
+       color = "Lead Diff", 
+       fill = "Lead Diff") +
+  theme_minimal()
 ```
 
 
