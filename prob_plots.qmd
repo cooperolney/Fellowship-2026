@@ -181,6 +181,8 @@ ggplot(duke_uconn_log, aes(x = time_elapsed, y = win_prob)) +
 # Bayesian Logistic Regression with Ratings Duke vs. UConn
 
 ```{r}
+# not working
+
 log_full <- readRDS("bayesian_logistic_full.rds")
 
 log_full <- log_full |>
@@ -201,5 +203,150 @@ ggplot(duke_uconn_brm, aes(x = time_elapsed, y = predicted)) +
   theme_minimal()
 ```
 
+
+# 2025 and 2026 Full Datasets
+```{r}
+# Load in 2026 season pbp data
+mbb_pbp <-  hoopR::load_mbb_pbp(seasons = 2025)
+
+# Clean the 2025 season data
+mbb_pbp_2025 <- mbb_pbp |>
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining,
+         lead_diff = home_score - away_score)
+
+# create new var: home_win
+mbb_pbp_2025 <- mbb_pbp_2025 |> group_by(game_id) |>
+  mutate(
+    home_win = if_else(
+      is.na(end_game_seconds_remaining) & home_score > away_score, 1, 0
+    )) |>
+  mutate(home_win = max(home_win)) |>
+  ungroup(game_id)
+
+# fill in the NAs
+mbb_pbp_2025 <- mbb_pbp_2025 |> mutate(
+  time_elapsed = if_else(is.na(time_elapsed), 2400, time_elapsed),
+  end_game_seconds_remaining = if_else(is.na(end_game_seconds_remaining), 0, end_game_seconds_remaining)
+)
+
+# only need these columns
+mbb_pbp_2025 <- mbb_pbp_2025 |>
+  select(game_id, time_elapsed, lead_diff, home_win)
+
+# works after 1 min, 14 million rows
+mbb_pbp_2025_clean <- mbb_pbp_2025 |> 
+  group_by(game_id) |> 
+  complete(time_elapsed = 0:2400) |> 
+  fill(lead_diff, home_win, .direction = "down") |> 
+  ungroup() |> 
+  arrange(game_id, time_elapsed, desc(row_number())) |>
+  distinct(game_id, time_elapsed, .keep_all = TRUE)
+
+write_csv(mbb_pbp_2025_clean, "mbb_pbp_2025_clean.csv")
+```
+
+```{r}
+# Load in 2026 season pbp data
+mbb_pbp_2026 <-  hoopR::load_mbb_pbp()
+
+# create new vars: time_elapsed and lead_diff
+mbb_pbp_2026 <- mbb_pbp_2026 |>
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining,
+         lead_diff = home_score - away_score)
+
+# create new var: home_win
+mbb_pbp_2026 <- mbb_pbp_2026 |> group_by(game_id) |>
+  mutate(
+    home_win = if_else(
+      is.na(end_game_seconds_remaining) & home_score > away_score, 1, 0
+    )) |>
+  mutate(home_win = max(home_win)) |>
+  ungroup(game_id)
+
+# fill in the NAs
+mbb_pbp_2026 <- mbb_pbp_2026 |> mutate(
+  time_elapsed = if_else(is.na(time_elapsed), 2400, time_elapsed),
+  end_game_seconds_remaining = if_else(is.na(end_game_seconds_remaining), 0, end_game_seconds_remaining)
+)
+
+# only need these columns
+mbb_pbp_2026 <- mbb_pbp_2026 |>
+  select(game_id, time_elapsed, lead_diff, home_win)
+
+# works after 1 min, 14 million rows
+mbb_pbp_2026_clean <- mbb_pbp_2026 |> 
+  group_by(game_id) |> 
+  complete(time_elapsed = 0:2400) |> 
+  fill(lead_diff, home_win, .direction = "down") |> 
+  ungroup() |> 
+  arrange(game_id, time_elapsed, desc(row_number())) |>
+  distinct(game_id, time_elapsed, .keep_all = TRUE)
+
+write_csv(mbb_pbp_2026_clean, "mbb_pbp_2026_clean.csv")
+```
+
+
+# Function for Predicted Probability Generation
+```{r}
+get_win_prob <- function(game_data, model_type, mle_clean, db_full, log_mod) {
+  
+  if (model_type == "mle") {
+    
+    result <- game_data |>
+      left_join(mle_clean, by = c("time_elapsed", "lead_diff"))
+    
+  } else if (model_type == "db") {
+    
+    result <- game_data |>
+      left_join(db_full, by = c("time_elapsed", "lead_diff"))
+    
+  } else if (model_type == "log") {
+    
+    result <- game_data |>
+      mutate(win_prob = predict(log_mod, newdata = pick(everything()), type = "response"))
+    
+  } else {
+    stop("model_type must be one of: 'mle', 'db', 'log'")
+  }
+  
+  return(result)
+}
+```
+
+```{r}
+# Duke vs UConn Game
+duke_uconn_game <- mbb_pbp_2026_clean |> filter(game_id == "401856577")
+
+duke_uconn_mle <- get_win_prob(duke_uconn_game, "mle", mle_clean, db_full, log_mod)
+duke_uconn_db  <- get_win_prob(duke_uconn_game, "db",  mle_clean, db_full, log_mod)
+duke_uconn_log <- get_win_prob(duke_uconn_game, "log", mle_clean, db_full, log_mod)
+
+
+# National Championship Game (Michigan vs UConn)
+mich_uconn_game <- mbb_pbp_2026_clean |> filter(game_id == "401856600")
+
+mich_uconn_mle <- get_win_prob(mich_uconn_game, "mle", mle_clean, db_full, log_mod)
+mich_uconn_db  <- get_win_prob(mich_uconn_game, "db",  mle_clean, db_full, log_mod)
+mich_uconn_log <- get_win_prob(mich_uconn_game, "log", mle_clean, db_full, log_mod)
+
+
+# Duke vs Virginia ACC Conference Championship
+duke_va_game <- mbb_pbp_2026_clean |> filter(game_id == 401851183)
+
+duke_va_mle <- get_win_prob(duke_va_game, "mle", mle_clean, db_full, log_mod)
+duke_va_db  <- get_win_prob(duke_va_game, "db",  mle_clean, db_full, log_mod)
+duke_va_log <- get_win_prob(duke_va_game, "log", mle_clean, db_full, log_mod)
+
+# Plot
+# change dataframe
+ggplot(duke_va_log, aes(x = time_elapsed, y = win_prob)) +
+  geom_line() +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = "Time Elapsed (seconds)",
+       y = "Predicted Home Win Probability") +
+  theme_minimal()
+```
 
 
