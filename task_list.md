@@ -1,5 +1,11 @@
 # Task List
 
+## Tasks for 7/2
+
+1. Continue messing around with closeread (picture-in-picture using CSS).
+
+2. Revise write-up based on more recent work.
+
 ## Tasks for 6/30
 
 1. Start messing around with closeread (picture-in-picture using CSS).
