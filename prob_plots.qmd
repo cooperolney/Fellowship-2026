@@ -329,6 +329,8 @@ mich_uconn_mle <- get_win_prob(mich_uconn_game, "mle", mle_clean, db_full, log_m
 mich_uconn_db  <- get_win_prob(mich_uconn_game, "db",  mle_clean, db_full, log_mod)
 mich_uconn_log <- get_win_prob(mich_uconn_game, "log", mle_clean, db_full, log_mod)
 
+write_csv(mich_uconn_db, "mich_uconn_db.csv")
+
 
 # Duke vs Virginia ACC Conference Championship
 duke_va_game <- mbb_pbp_2026_clean |> filter(game_id == 401851183)
@@ -337,9 +339,11 @@ duke_va_mle <- get_win_prob(duke_va_game, "mle", mle_clean, db_full, log_mod)
 duke_va_db  <- get_win_prob(duke_va_game, "db",  mle_clean, db_full, log_mod)
 duke_va_log <- get_win_prob(duke_va_game, "log", mle_clean, db_full, log_mod)
 
+write_csv(duke_va_db, "duke_va_db.csv")
+
 # Plot
 # change dataframe
-ggplot(duke_va_log, aes(x = time_elapsed, y = win_prob)) +
+ggplot(duke_va_db, aes(x = time_elapsed, y = win_prob)) +
   geom_line() +
   geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray") +
   geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
