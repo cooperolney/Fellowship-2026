@@ -51,7 +51,7 @@ brm_mod_rank <- brm(home_win ~ lead_scaled + time_scaled + rating_scaled + time_
 #   as_tibble()
 
 ##  -- Save rds file --
-saveRDS(brm_mod_rank, file = "bayesian_logistic_full.rds")
+saveRDS(brm_mod_rank, file = "brm_full.rds")
 
 
 

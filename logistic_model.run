@@ -14,7 +14,7 @@ echo ""
 
 module load R
 
-Rscript /home/cmolne23/bayesian_logistic_quarter.R 
+Rscript /home/cmolne23/bayesian_logistic.R 
 
 echo -n "FINISHED JOB AT: "
 date
