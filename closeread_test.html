@@ -45,6 +45,7 @@ ul.task-list li input[type="checkbox"] {
 
 
 <link rel="stylesheet" href="_extensions/qmd-lab/closeread/closeread.css">
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body class="quarto-light">
@@ -55,9 +56,9 @@ ul.task-list li input[type="checkbox"] {
       <!-- user-provided yaml closeread style options -->
       <style>
         :root {
-          --cr-narrative-background-color-sidebar: lightgrey;
+          --cr-narrative-background-color-sidebar: #009CDE;
+--cr-section-background-color: #009CDE;
 --cr-narrative-text-color-sidebar: black;
---cr-section-background-color: lightgrey;
         }
       </style>
     
@@ -83,22 +84,42 @@ ul.task-list li input[type="checkbox"] {
 
 <section id="duke-vs-uconn---2026-elite-eight" class="level2">
 <h2 class="anchored" data-anchor-id="duke-vs-uconn---2026-elite-eight">Duke vs UConn - 2026 Elite Eight</h2>
+<div class="case-study-intro">
 <p>This case study applies the Dynamic Bayes win probability estimator to the 2026 Elite Eight matchup between Duke and UConn. The model treats Duke as the designated home team, establishing the initial baseline for the in-game probability tracking.</p>
+</div>
 <div class="cr-section cr-column-screen sidebar-left">
 <div class="narrative-col">
 <div class="trigger new-trigger" data-focus-on="cr-game-plot-01">
 <div class="narrative">
-<p>This Elite Eight matchup features the Duke Blue Devils and the UConn Huskies, the 1 and 2 seed from the East region respectively. Throughout the year Duke was known for … , and UConn excelled in … and struggled in … .</p>
+<p><span class="cr-bubble">This Elite Eight matchup features the Duke Blue Devils and the UConn Huskies, the 1 and 2 seed from the East region respectively. Throughout the year Duke was known for … , and UConn excelled in … and struggled in … .</span></p>
 </div>
 </div>
-<div class="trigger new-trigger" data-focus-on="cr-game-plot-01" data-scale-by="2.5" data-pan-to="0%,70%">
+<div class="trigger new-trigger" data-scale-by="2.5" data-focus-on="cr-game-plot-01" data-pan-to="0%,70%">
 <div class="narrative">
-<p>During the first half, Duke dominated the game and had built a comfortable lead. Driven by a high-efficiency shooting stretch and an advantage in the turnover margin, the Blue Devils built a 19-point lead. Leading to the Dynamic Bayes model peaking at a 98.6% win probability for Duke just prior to the end of the 1st half.</p>
+<p><span class="cr-bubble">During the first half, Duke dominated the game and had built a comfortable lead. Driven by a high-efficiency shooting stretch and an advantage in the turnover margin, the Blue Devils built a 19-point lead. Leading to the Dynamic Bayes model peaking at a 98.6% win probability for Duke just prior to the end of the 1st half.</span></p>
 </div>
 </div>
-<div class="trigger new-trigger" data-focus-on="cr-game-plot-01" data-scale-by="2" data-pan-to="-100%,25%">
+<div class="trigger new-trigger" data-scale-by="2" data-focus-on="cr-game-plot-01" data-pan-to="-100%,25%">
 <div class="narrative">
-<p>Despite the low probability of a comeback, UConn showed elite shot-making in the closing minutes. Duke retained a strong 88% win probability in the final possession, but a dramatic 35-foot buzzer-beating three-pointer by freshman Braylon Mullins flipped the model instantly, securing a miraculous upset for UConn.</p>
+<p><span class="cr-bubble">Despite the low probability of a comeback, UConn showed elite shot-making in the closing minutes. Duke retained a strong 88% win probability in the final possession, but a dramatic 35-foot buzzer-beating three-pointer by freshman Braylon Mullins flipped the model instantly, securing a miraculous upset for UConn.</span></p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-game-plot-01">
+<div class="narrative">
+<p><img src="uconn.jpg" class="cr-bubble img-fluid"></p>
+</div>
+</div>
+<div class="trigger">
+<div class="cr-minimap-float narrative">
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="closeread_test_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -121,27 +142,47 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="michigan-vs-uconn---2026-national-championship" class="level2">
 <h2 class="anchored" data-anchor-id="michigan-vs-uconn---2026-national-championship">Michigan vs UConn - 2026 National Championship</h2>
+<div class="case-study-intro">
 <p>This case study applies the Dynamic Bayes win probability estimator to the 2026 National Championship game between Michigan and UConn. The model treats Michigan as the designated home team, establishing the initial baseline for the in-game probability tracking.</p>
+</div>
 <div class="cr-section cr-column-screen sidebar-left">
 <div class="narrative-col">
 <div class="trigger new-trigger" data-focus-on="cr-game-plot-02">
 <div class="narrative">
-<p>The National Championship game features the Michigan Wolverines and the UConn Huskies. Michigan the top seed from the Midwest region and UConn the 2 seed from the East region, both have won four straight games to get to this point. Michigan has been a favorite all year…, and UConn after their upset against Duke have all the momentum to win this game… .</p>
+<p><span class="cr-bubble">The National Championship game features the Michigan Wolverines and the UConn Huskies. Michigan the top seed from the Midwest region and UConn the 2 seed from the East region, both have won four straight games to get to this point. Michigan has been a favorite all year…, and UConn after their upset against Duke have all the momentum to win this game… .</span></p>
 </div>
 </div>
-<div class="trigger new-trigger" data-focus-on="cr-game-plot-02" data-scale-by="2.5" data-pan-to="40%,25%">
+<div class="trigger new-trigger" data-scale-by="2.5" data-focus-on="cr-game-plot-02" data-pan-to="40%,25%">
 <div class="narrative">
-<p>Michigan secured an early 5-point lead through forcing turnovers and fastbreak points, but UConn countered later in the first half. By dominating second-chance points and the offensive glass, UConn suppressed Michigan’s win probability to a first-half low of 52.1%, turning the game into a statistical toss-up with 8 minutes left in the 1st half.</p>
+<p><span class="cr-bubble">Michigan secured an early 5-point lead through forcing turnovers and fastbreak points, but UConn countered later in the first half. By dominating second-chance points and the offensive glass, UConn suppressed Michigan’s win probability to a first-half low of 52.1%, turning the game into a statistical toss-up with 8 minutes left in the 1st half.</span></p>
 </div>
 </div>
-<div class="trigger new-trigger" data-focus-on="cr-game-plot-02" data-scale-by="2" data-pan-to="-80%,25%">
+<div class="trigger new-trigger" data-scale-by="2" data-focus-on="cr-game-plot-02" data-pan-to="-80%,25%">
 <div class="narrative">
-<p>In the 2nd half, Michigan maintained a consistent lead. However, with 8.5 minutes remaining, UConn went on a run to reduce the deficit to 5 points. This late-game surge tested Michigan’s chance of a win, dropping the win probability to 80.6%.</p>
+<p><span class="cr-bubble">In the 2nd half, Michigan maintained a consistent lead. However, with 8.5 minutes remaining, UConn went on a run to reduce the deficit to 5 points. This late-game surge tested Michigan’s chance of a win, dropping the win probability to 80.6%.</span></p>
 </div>
 </div>
-<div class="trigger new-trigger" data-focus-on="cr-game-plot-02" data-scale-by="2.5" data-pan-to="-100%,50%">
+<div class="trigger new-trigger" data-scale-by="2.5" data-focus-on="cr-game-plot-02" data-pan-to="-100%,50%">
 <div class="narrative">
-<p>But UConn’s run finally ends as they are no match for Michigan in the final minutes of the game. Michigan are able to retain their lead for the rest of the game, and they are crowned the 2026 National Champions.</p>
+<p><span class="cr-bubble">But UConn’s run finally ends as they are no match for Michigan in the final minutes of the game. Michigan are able to retain their lead for the rest of the game, and they are crowned the 2026 National Champions.</span></p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-game-plot-02">
+<div class="narrative">
+<p><img src="mich.jpg" class="cr-bubble img-fluid"></p>
+</div>
+</div>
+<div class="trigger">
+<div class="cr-minimap-float-02 narrative">
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="closeread_test_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -152,7 +193,7 @@ ul.task-list li input[type="checkbox"] {
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="closeread_test_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="closeread_test_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -164,22 +205,42 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="duke-vs-virginia---2026-acc-conference-championship" class="level2">
 <h2 class="anchored" data-anchor-id="duke-vs-virginia---2026-acc-conference-championship">Duke vs Virginia - 2026 ACC Conference Championship</h2>
+<div class="case-study-intro">
 <p>This case study applies the Dynamic Bayes win probability estimator to the 2026 ACC Conference Championship game between Duke and Virginia. The model treats Duke as the home team, establishing the initial baseline for the in-game probability tracking.</p>
+</div>
 <div class="cr-section cr-column-screen sidebar-left">
 <div class="narrative-col">
 <div class="trigger new-trigger" data-focus-on="cr-game-plot-03">
 <div class="narrative">
-<p>This ACC Conference Championship matchup features the Duke Blue Devils and the Virginia Cavaliers, the 1 and 2 seeds in the ACC bracket, respectively. During the regular season Duke beat Virginia 77-51.</p>
+<p><span class="cr-bubble">This ACC Conference Championship matchup features the Duke Blue Devils and the Virginia Cavaliers, the 1 and 2 seeds in the ACC bracket, respectively. During the regular season Duke beat Virginia 77-51.</span></p>
 </div>
 </div>
-<div class="trigger new-trigger" data-focus-on="cr-game-plot-03" data-scale-by="2.5" data-pan-to="40%,30%">
+<div class="trigger new-trigger" data-scale-by="2.5" data-focus-on="cr-game-plot-03" data-pan-to="40%,30%">
 <div class="narrative">
-<p>Entering the game as favorites, Duke was initially slowed down by Virginia’s signature low-tempo offense and interior defense. Virginia built an early 6-point lead, lowering Duke’s win probability to 44.0%. However, a late first-half scoring run driven by three-point shooting allowed Duke to take a 7-point lead, peaking their win probability to 84.0% in the 1st half.</p>
+<p><span class="cr-bubble">Entering the game as favorites, Duke was initially slowed down by Virginia’s signature low-tempo offense and interior defense. Virginia built an early 6-point lead, lowering Duke’s win probability to 44.0%. However, a late first-half scoring run driven by three-point shooting allowed Duke to take a 7-point lead, peaking their win probability to 84.0% in the 1st half.</span></p>
 </div>
 </div>
-<div class="trigger new-trigger" data-focus-on="cr-game-plot-03" data-scale-by="2" data-pan-to="-60%,30%">
+<div class="trigger new-trigger" data-scale-by="2" data-focus-on="cr-game-plot-03" data-pan-to="-60%,30%">
 <div class="narrative">
-<p>The 2nd half was very back and forth, with Duke’s win probability increasing above 80% and dropping below 50% multiple times due to many runs both teams went on. Thanks to clutch free throws in the final minutes of the game, Duke was able to hold on and win back-to-back ACC Conference Champions.</p>
+<p><span class="cr-bubble">The 2nd half was very back and forth, with Duke’s win probability increasing above 80% and dropping below 50% multiple times due to many runs both teams went on. Thanks to clutch free throws in the final minutes of the game, Duke was able to hold on and win back-to-back ACC Conference Champions.</span></p>
+</div>
+</div>
+<div class="trigger new-trigger" data-focus-on="cr-game-plot-03">
+<div class="narrative">
+<p><img src="duke.jpg" class="cr-bubble img-fluid"></p>
+</div>
+</div>
+<div class="trigger">
+<div class="cr-minimap-float-03 narrative">
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="closeread_test_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -190,7 +251,7 @@ ul.task-list li input[type="checkbox"] {
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="closeread_test_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="closeread_test_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>

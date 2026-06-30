@@ -1,0 +1,132 @@
+/* Narrative text "bubble" styling */
+.cr-bubble {
+  display: block;
+  border-radius: 12px;
+  padding: 0.9em 1.2em;
+  margin: 0.5em 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  background-color: #00B2FF;
+  color: #1a1a1a;
+}
+
+/* Add empty space around the game introduction text */
+.case-study-intro {
+  margin-top: 0px;    /* Adds empty white space above the text */
+  margin-bottom: 50px; /* Adds empty white space below the text before the chart starts */
+  /*font-size: 1.15rem; */
+  /*line-height: 1.6; */
+}
+
+/* Steps For Duke vs. UConn Minimap */
+
+/* 1. Base style for the floating container (Hidden by default) */
+.cr-minimap-float {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 333px;
+  height: 240px;
+  background-color: white;
+  border: 2px solid #1a1a1a;
+  border-radius: 8px;
+  padding: 5px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  pointer-events: none;
+  
+  /* Start hidden */
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.cr-section:has(#cr-game-plot-01[style*="transform"]) .cr-minimap-float {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 3. Forces the real R ggplot output to scale and fill the mini-map perfectly */
+.cr-minimap-float img, 
+.cr-minimap-float decimal, 
+.cr-minimap-float svg,
+.cr-minimap-float .cell-output-display {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+}
+
+/* Steps For Michigan vs. UConn Minimap */
+
+/* 1. Base style for the floating container (Hidden by default) */
+.cr-minimap-float-02 {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 333px;
+  height: 240px;
+  background-color: white;
+  border: 2px solid #1a1a1a;
+  border-radius: 8px;
+  padding: 5px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  pointer-events: none;
+  
+  /* Start hidden */
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.cr-section:has(#cr-game-plot-02[style*="transform"]) .cr-minimap-float-02 {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 3. Forces the real R ggplot output to scale and fill the mini-map perfectly */
+.cr-minimap-float-02 img, 
+.cr-minimap-float-02 decimal, 
+.cr-minimap-float-02 svg,
+.cr-minimap-float-02 .cell-output-display {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+}
+
+/* Steps For Duke vs. Virginia Minimap */
+
+/* 1. Base style for the floating container (Hidden by default) */
+.cr-minimap-float-03 {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 333px;
+  height: 240px;
+  background-color: white;
+  border: 2px solid #1a1a1a;
+  border-radius: 8px;
+  padding: 5px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  pointer-events: none;
+  
+  /* Start hidden */
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.cr-section:has(#cr-game-plot-03[style*="transform"]) .cr-minimap-float-03 {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 3. Forces the real R ggplot output to scale and fill the mini-map perfectly */
+.cr-minimap-float-03 img, 
+.cr-minimap-float-03 decimal, 
+.cr-minimap-float-03 svg,
+.cr-minimap-float-03 .cell-output-display {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+}
