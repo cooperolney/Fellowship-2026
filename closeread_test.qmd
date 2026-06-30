@@ -2,32 +2,35 @@
 title: "Closeread Test"
 format:
   closeread-html:
-    embed-resources: true
     cr-style:
-      narrative-background-color-overlay: darkslategrey
-      narrative-text-color-overlay: "#e2e2e2"
+      section-background-color: lightgrey # color behind graphs
+      narrative-background-color-sidebar: lightgrey # color behind text (sidebar)
+      narrative-text-color-sidebar: black # color of text in sidebar
+      
+      
 ---
 
 ```{r}
 #| include: false
 library(tidyverse)
 duke_uconn_db <- read_csv("duke_uconn_db.csv")
+mich_uconn_db <- read_csv("mich_uconn_db.csv")
+duke_va_db <- read_csv("duke_va_db.csv")
 ```
 
 ## Duke vs UConn - 2026 Elite Eight
 
-This is a test Closeread document using the Dynamic Bayes win probability estimator applied to the Duke vs UConn Elite Eight game.
+This case study applies the Dynamic Bayes win probability estimator to the 2026 Elite Eight matchup between Duke and UConn. The model treats Duke as the designated home team, establishing the initial baseline for the in-game probability tracking.
 
 :::{.cr-section}
 
-Duke was the home team. The dashed horizontal line marks 50% win probability and the dashed vertical line marks halftime. @cr-game-plot
+This Elite Eight matchup features the Duke Blue Devils and the UConn Huskies, the 1 and 2 seed from the East region respectively. Throughout the year Duke was known for ... , and UConn excelled in ... and struggled in ... . @cr-game-plot-01
 
+During the first half, Duke dominated the game and had built a comfortable lead. Driven by a high-efficiency shooting stretch and an advantage in the turnover margin, the Blue Devils built a 19-point lead. Leading to the Dynamic Bayes model peaking at a 98.6% win probability for Duke just prior to the end of the 1st half. [@cr-game-plot-01]{pan-to="0%,70%" scale-by="2.5"}
 
-Halfway through the game Duke had built a comfortable lead and their win probability peaked at 98.6% when they had a 19 point lead just before the 1st half ended. [@cr-game-plot]{pan-to="0%,70%" scale-by="2.5"}
+Despite the low probability of a comeback, UConn showed elite shot-making in the closing minutes. Duke retained a strong 88% win probability in the final possession, but a dramatic 35-foot buzzer-beating three-pointer by freshman Braylon Mullins flipped the model instantly, securing a miraculous upset for UConn. [@cr-game-plot-01]{pan-to="-100%,25%" scale-by="2"}
 
-In the final seconds of the game, UConn's freshman Braylon Mullins hits a 35-foot buzzer beating three pointer to win. Just before the shot Duke's win probability was at 88%. [@cr-game-plot]{pan-to="-100%,25%" scale-by="2"}
-
-:::{#cr-game-plot}
+:::{#cr-game-plot-01}
 
 ```{r}
 #| warning: false
@@ -47,3 +50,76 @@ ggplot(duke_uconn_db, aes(x = time_elapsed, y = win_prob)) +
 :::
 
 :::
+
+
+## Michigan vs UConn - 2026 National Championship
+
+This case study applies the Dynamic Bayes win probability estimator to the 2026 National Championship game between Michigan and UConn. The model treats Michigan as the designated home team, establishing the initial baseline for the in-game probability tracking.
+
+:::{.cr-section}
+
+The National Championship game features the Michigan Wolverines and the UConn Huskies. Michigan the top seed from the Midwest region and UConn the 2 seed from the East region, both have won four straight games to get to this point. Michigan has been a favorite all year..., and UConn after their upset against Duke have all the momentum to win this game... . @cr-game-plot-02
+
+Michigan secured an early 5-point lead through forcing turnovers and fastbreak points, but UConn countered later in the first half. By dominating second-chance points and the offensive glass, UConn suppressed Michigan’s win probability to a first-half low of 52.1%, turning the game into a statistical toss-up with 8 minutes left in the 1st half. [@cr-game-plot-02]{pan-to="40%,25%" scale-by="2.5"}
+
+In the 2nd half, Michigan maintained a consistent lead. However, with 8.5 minutes remaining, UConn went on a run to reduce the deficit to 5 points. This late-game surge tested Michigan's chance of a win, dropping the win probability to 80.6%. [@cr-game-plot-02]{pan-to="-80%,25%" scale-by="2"}
+
+But UConn's run finally ends as they are no match for Michigan in the final minutes of the game. Michigan are able to retain their lead for the rest of the game, and they are crowned the 2026 National Champions. [@cr-game-plot-02]{pan-to="-100%,50%" scale-by="2.5"}
+
+:::{#cr-game-plot-02}
+
+```{r}
+#| warning: false
+
+ggplot(mich_uconn_db, aes(x = time_elapsed, y = win_prob)) +
+  geom_line(linewidth = 0.4) +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
+  scale_x_continuous(breaks = seq(0, 2400, by = 300)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(title = "Michigan vs UConn Dynamic Bayes Win Probability",
+       x = "Time Elapsed (seconds)",
+       y = "Predicted Home Win Probability (Michigan)") +
+  theme_minimal(base_size = 14)
+```
+
+:::
+
+:::
+
+
+## Duke vs Virginia - 2026 ACC Conference Championship
+
+This case study applies the Dynamic Bayes win probability estimator to the 2026 ACC Conference Championship game between Duke and Virginia. The model treats Duke as the home team, establishing the initial baseline for the in-game probability tracking.
+
+:::{.cr-section}
+
+This ACC Conference Championship matchup features the Duke Blue Devils and the Virginia Cavaliers, the 1 and 2 seeds in the ACC bracket, respectively. During the regular season Duke beat Virginia 77-51. @cr-game-plot-03
+
+Entering the game as favorites, Duke was initially slowed down by Virginia's signature low-tempo offense and interior defense. Virginia built an early 6-point lead, lowering Duke's win probability to 44.0%. However, a late first-half scoring run driven by three-point shooting allowed Duke to take a 7-point lead, peaking their win probability to 84.0% in the 1st half. [@cr-game-plot-03]{pan-to="40%,30%" scale-by="2.5"}
+
+The 2nd half was very back and forth, with Duke's win probability increasing above 80% and dropping below 50% multiple times due to many runs both teams went on. Thanks to clutch free throws in the final minutes of the game, Duke was able to hold on and win back-to-back ACC Conference Champions. [@cr-game-plot-03]{pan-to="-60%,30%" scale-by="2"}
+
+:::{#cr-game-plot-03}
+
+```{r}
+#| warning: false
+
+ggplot(duke_va_db, aes(x = time_elapsed, y = win_prob)) +
+  geom_line(linewidth = 0.4) +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
+  scale_x_continuous(breaks = seq(0, 2400, by = 300)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(title = "Duke vs Virginia Dynamic Bayes Win Probability",
+       x = "Time Elapsed (seconds)",
+       y = "Predicted Home Win Probability (Duke)") +
+  theme_minimal(base_size = 14)
+```
+
+:::
+
+:::
+
+
+# Conclusion
