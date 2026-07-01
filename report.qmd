@@ -230,9 +230,119 @@ ggplot(mle_heatmap_clean, aes(x = time_elapsed, y = lead_diff, fill = win_prob))
 ```
 
 *Heatmap Plot*
-This heatmap uses  data from all games from the 2026 season, for this data each row is an event and there can be multiple events a second. Overall the plot follows the general trends where a large lead results in high win prob and a large deficit results in a low win prob. The major issue with the MLE model is that for rare situations, for example, games with a 10 point deficit 2 minutes into the game doesn't happen often so there might be inaccurate win probability. Which is why there are some red tiles in spots where it doesn't make sense for the win probability to be extremely high.
+This heatmap uses data from all games from the 2026 season, for this data each row is an event and there can be multiple events a second. Overall the plot follows the general trends where a large lead results in high win prob and a large deficit results in a low win prob. The major issue with the MLE model is that for rare situations, for example, games with a 10 point deficit 2 minutes into the game doesn't happen often so there might be inaccurate win probability. Which is why there are some red tiles in spots where it doesn't make sense for the win probability to be extremely high.
 
 *Clean Heatmap Plot*
 This heatmap also uses data from the 2026 season, but each row is 1 second and the duplicate events are removed, resulting in more total rows of data. This heatmap looks very similar to the previous heatmap, since now more combinations of score and time are covered the plot looks smoother. But there is still some inaccurate win probabilities results. Around 800 seconds and a score diff of -30, there are some dark red tiles meaning that the win probability was 100%, this is because one game occurred where the home team was down 30 points 800 seconds into the game, but they ended up winning which causes these outlying red tiles.
+
+
+# Dynamic Bayes Heatmap
+```{r}
+db_full <- readRDS("dynamic_bayes_full.rds")
+
+ggplot(db_full, aes(x = time_elapsed, y = lead_diff, fill = win_prob)) +
+  geom_tile() +
+  scale_fill_gradientn(colors = c("blue", "green", "white", "yellow", "red")) +
+  labs(
+    x = "Time elapsed (seconds)", 
+    y = "Score differential",
+    fill = "p"
+  ) +
+  theme_minimal()
+```
+
+*Heatmap*
+This heatmap uses data from the 2025 season, and for every row is 1 second of game data. This heatmap compares very well to the heatmap used in the referenced research paper where they used data from multiple seasons, so this heatmap is able to capture the overall predicted win probability in each "window". A window is +/- 3 seconds and 2 points from the current time and score combination. This is helps with the rare situations, so now this heatmap doesn't contain very high or low win probabilities where they shouldn't be. Also the dynamic bayes heatmap uses beta priors, so the win probability won't solely rely on the data, this results in the predicted win probability to never be exactly 100% or 0%. The dynamic bayes model and heatmap has similar calculations to the MLE method, but it is an overall improvement.
+
+
+# Probability Plots
+```{r}
+# Dynamic Bayes: Duke vs UConn
+ggplot(duke_uconn_db, aes(x = time_elapsed, y = win_prob)) +
+  geom_line() +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = "Time Elapsed (seconds)",
+       y = "Predicted Home Win Probability") +
+  theme_minimal()
+
+# Dynamic Bayes: Michigan vs UConn
+ggplot(mich_uconn_db, aes(x = time_elapsed, y = win_prob)) +
+  geom_line() +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = "Time Elapsed (seconds)",
+       y = "Predicted Home Win Probability") +
+  theme_minimal()
+
+# Dynamic Bayes: Duke vs Virginia
+ggplot(duke_va_db, aes(x = time_elapsed, y = win_prob)) +
+  geom_line() +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = "Time Elapsed (seconds)",
+       y = "Predicted Home Win Probability") +
+  theme_minimal()
+```
+
+*Predicted Probability Plots*
+These three plots will be in the closeread document, using a function you can easily create one of these plots for any game in the dataset and using one of the these three methods: MLE, Dynamic Bayes, or Logistic Regression. These predicted probability plots map the home team's predicted win probability throughout the entire game. The plots listed all use the Dynamic Bayes method to predicted win probability, and they cover three interesting games from the 2026 college basketball season. First, Duke vs. UConn in the Elite Eight saw Duke reach a 19 point lead and reaching a win probability of 98% in the first half. But a large comeback and a buzzer beating 3-pointer saw UConn win the game and move on in the tournament. Second, Michigan vs. UConn in the National Championship game, this game isn't too intersting, but it shows how Michigan retained a small lead throughout the game and how their win probability increased as they got further into the game. Lastly, Duke vs. Virginia in the ACC Conference Championship, this was a very back and forth game, where neither team could keep their lead. Despite being down multiple times in this game, Duke had over a 50% win probability most of the time, showing how the model incorporates home court advantage in predicting home team win probability.
+
+# Bayesian Logistic Regression w/ Ratings
+```{r}
+brm_full <- readRDS("brm_full.rds")
+
+min_lead_diff <- min(subset_games$lead_diff)
+max_lead_diff <- max(subset_games$lead_diff)
+
+min_rating_diff <- min(subset_games$rating_diff)
+max_rating_diff <- max(subset_games$rating_diff)
+
+# Build prediction grid in original units, then scale to match the model
+pred_grid <- expand.grid(
+  time_elapsed = seq(0, 2400, by = 10),
+  lead_diff    = c(-15, -10, -5, 0, 5, 10, 15),
+  rating_diff  = 0   # hold rating_diff at 0 (evenly matched teams)
+) |>
+  mutate(
+    time_scaled   = (time_elapsed - 0) / (2400 - 0),
+    lead_scaled   = (lead_diff - min_lead_diff) / (max_lead_diff - min_lead_diff),
+    rating_scaled = (rating_diff - min_rating_diff) / (max_rating_diff - min_rating_diff)
+  )
+
+# Get posterior predicted probabilities
+preds_brm_mod_rank_scaled <- pred_grid |>
+  mutate(
+    predicted = posterior_epred(brm_mod_rank, newdata = pred_grid) |>
+      colMeans(),
+    # optional: get credible intervals too
+    lower = posterior_epred(brm_mod_rank, newdata = pred_grid) |>
+      apply(2, quantile, 0.025),
+    upper = posterior_epred(brm_mod_rank, newdata = pred_grid) |>
+      apply(2, quantile, 0.975)
+  )
+
+# plot
+ggplot(preds_brm_mod_rank_scaled, aes(x = time_elapsed, y = predicted, 
+                          color = factor(lead_diff))) +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = factor(lead_diff)),
+              alpha = 0.25, color = NA) +
+  geom_line(linewidth = 1.5) +
+  scale_colour_viridis_d(option = "D") +
+  scale_fill_viridis_d(option = "D") +
+  labs(x = "Time Elapsed (seconds)", 
+       y = "Predicted Home Win Probability",
+       color = "Lead Diff", 
+       fill = "Lead Diff") +
+  theme_minimal()
+```
+
+*Regression Plot*
+This plot shows how the predicted win probability of the home team changes throughout a game given seven different lead differences. In the first 300 seconds of the game, the order or the lead differences regression lines is flipped to how you would expect them to be. This is likely due to extrapolation, where there is very limited data on large lead differences in the first few minutes of the game, so the model struggles to predict win probabilities during that time. Looking at the lead diff of 0, when time elapsed is 0, the win probability is slightly below 50% which is surprising because all of the other models have the starting win probability of the home team in the mid 60s, so this model shows no home team advantage. As the game goes on, the regression lines spread out towards either 100% or 0% because there is less time for a comeback. The model could be revised to remove data from the first few minutes, so there is no extrapolation.
+
+
 
 
