@@ -675,7 +675,59 @@ ggplot(log_full, aes(x = time_elapsed, y = predicted,
   theme_minimal()
 ```
 
+# brm_full.rds
+```{r}
+# This is from bayesian_logistic.R where the output is the bayesian logistic model brm_mod_rank
 
+brm_full <- readRDS("brm_full.rds")
+
+# model predictions
+# build grid manually
+
+min_lead_diff <- min(subset_games$lead_diff)
+max_lead_diff <- max(subset_games$lead_diff)
+
+min_rating_diff <- min(subset_games$rating_diff)
+max_rating_diff <- max(subset_games$rating_diff)
+
+# Build prediction grid in original units, then scale to match the model
+pred_grid <- expand.grid(
+  time_elapsed = seq(0, 2400, by = 10),
+  lead_diff    = c(-15, -10, -5, 0, 5, 10, 15),
+  rating_diff  = 0   # hold rating_diff at 0 (evenly matched teams)
+) |>
+  mutate(
+    time_scaled   = (time_elapsed - 0) / (2400 - 0),
+    lead_scaled   = (lead_diff - min_lead_diff) / (max_lead_diff - min_lead_diff),
+    rating_scaled = (rating_diff - min_rating_diff) / (max_rating_diff - min_rating_diff)
+  )
+
+# Get posterior predicted probabilities
+preds_brm_mod_rank_scaled <- pred_grid |>
+  mutate(
+    predicted = posterior_epred(brm_mod_rank, newdata = pred_grid) |>
+      colMeans(),
+    # optional: get credible intervals too
+    lower = posterior_epred(brm_mod_rank, newdata = pred_grid) |>
+      apply(2, quantile, 0.025),
+    upper = posterior_epred(brm_mod_rank, newdata = pred_grid) |>
+      apply(2, quantile, 0.975)
+  )
+
+# plot
+ggplot(preds_brm_mod_rank_scaled, aes(x = time_elapsed, y = predicted, 
+                          color = factor(lead_diff))) +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = factor(lead_diff)),
+              alpha = 0.25, color = NA) +
+  geom_line(linewidth = 1.5) +
+  scale_colour_viridis_d(option = "D") +
+  scale_fill_viridis_d(option = "D") +
+  labs(x = "Time Elapsed (seconds)", 
+       y = "Predicted Home Win Probability",
+       color = "Lead Diff", 
+       fill = "Lead Diff") +
+  theme_minimal()
+```
 
 
 
