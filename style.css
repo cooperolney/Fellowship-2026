@@ -45,7 +45,7 @@
   transform: translateY(0);
 }
 
-/* 3. Forces the real R ggplot output to scale and fill the mini-map perfectly */
+/* 3. Allows the R ggplot output to scale and fill the mini-map */
 .cr-minimap-float img, 
 .cr-minimap-float decimal, 
 .cr-minimap-float svg,
@@ -83,7 +83,7 @@
   transform: translateY(0);
 }
 
-/* 3. Forces the real R ggplot output to scale and fill the mini-map perfectly */
+/* 3. Allows the R ggplot output to scale and fill the mini-map */
 .cr-minimap-float-02 img, 
 .cr-minimap-float-02 decimal, 
 .cr-minimap-float-02 svg,
@@ -121,7 +121,7 @@
   transform: translateY(0);
 }
 
-/* 3. Forces the real R ggplot output to scale and fill the mini-map perfectly */
+/* 3. Allows the R ggplot output to scale and fill the mini-map */
 .cr-minimap-float-03 img, 
 .cr-minimap-float-03 decimal, 
 .cr-minimap-float-03 svg,
@@ -130,3 +130,72 @@
   height: 100% !important;
   object-fit: contain;
 }
+
+
+/* Apply a border and rounded corners to the main plots */
+#cr-game-plot-01 {
+  background-color: white;    
+  border: 2px solid #1a1a1a;   
+  border-radius: 8px;          
+  padding: 10px;             
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15); 
+}
+
+#cr-game-plot-02 {
+  background-color: white;    
+  border: 2px solid #1a1a1a;   
+  border-radius: 8px;          
+  padding: 10px;             
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15); 
+}
+
+#cr-game-plot-03 {
+  background-color: white;    
+  border: 2px solid #1a1a1a;   
+  border-radius: 8px;          
+  padding: 10px;             
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15); 
+}
+
+
+/* ======================================================== */
+/* Duke vs. UConn: Shaded areas on minimap                 */
+/* ======================================================== */
+
+/* Ensure the output block inside allows absolute overlay positions */
+.cr-minimap-float .cell-output-display {
+  position: relative;
+  display: block;
+}
+
+/* Create the semi-see-through overlay rectangle container directly over the image */
+.cr-minimap-float .cell-output-display::after {
+  content: "";
+  position: absolute;
+  background-color: rgba(0, 178, 255, 0.25); /* Semi-transparent blue */
+  border: 1.5px solid #00B2FF;               /* Sharp bounding border */
+  border-radius: 4px;
+  opacity: 0;                                 /* Hidden by default */
+  transition: all 0.3s ease-in-out;           /* Smoothly slides/resizes box between steps */
+  pointer-events: none;                       /* Make sure it doesn't block mouse movements */
+  z-index: 999;                               /* Forces it to sit strictly on top of the image canvas */
+}
+
+/* Zone 1 Box: Shading the first half zoom (Triggers when the 2nd narrative step is active) */
+.cr-section:has(.cr-narrative-step:nth-of-type(2).cr-active) .cr-minimap-float .cell-output-display::after {
+  opacity: 1;
+  top: 15px;
+  left: 45px;
+  width: 130px;
+  height: 110px;
+}
+
+/* Zone 2 Box: Shading the final possession zoom (Triggers when the 3rd narrative step is active) */
+.cr-section:has(.cr-narrative-step:nth-of-type(3).cr-active) .cr-minimap-float .cell-output-display::after {
+  opacity: 1;
+  top: 90px;
+  left: 175px;
+  width: 120px;
+  height: 100px;
+}
+
