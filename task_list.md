@@ -1,6 +1,16 @@
 # Task List
 
-## Tasks for 7/2
+## Tasks for 7/7
+
+1. Make some probability plots comparing the 4 different methods.
+
+2. Pick one game and one method and really try to tweak the closeread file to make it as professional as possible.
+
+3. Look into publishing a closeread file (options: publish a single file using github pages, could make a quarto blog).
+
+4. Can start on a poster! (use posterdown). 
+
+## Tasks for 7/1
 
 1. Continue messing around with closeread (picture-in-picture using CSS).
 
