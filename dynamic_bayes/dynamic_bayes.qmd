@@ -231,7 +231,7 @@ ggplot(db_half, aes(x = time_elapsed, y = lead_diff, fill = win_prob)) +
 
 ```{r}
 # All of the dataset, 6136 games
-db_full <- readRDS("dynamic_bayes_full.rds")
+db_full <- readRDS("dynamic_bayes/dynamic_bayes_full.rds")
 
 ggplot(db_full, aes(x = time_elapsed, y = lead_diff, fill = win_prob)) +
   geom_tile() +
