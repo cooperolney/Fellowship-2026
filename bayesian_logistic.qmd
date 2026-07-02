@@ -729,5 +729,27 @@ ggplot(preds_brm_mod_rank_scaled, aes(x = time_elapsed, y = predicted,
   theme_minimal()
 ```
 
+# log_full_rank.rds
+```{r}
+log_full_rank <- readRDS("log_full_rank.rds")
+
+preds_log_mod_rank <- ggpredict(log_full_rank, terms = c("time_elapsed [0:2400 by=10]",
+                                        "lead_diff [-15, -10, -5, 0, 5, 10, 15]")) |>
+   as.data.frame(terms_to_colnames = TRUE) |>
+   as_tibble()
+
+ggplot(preds_log_full_rank, aes(x = time_elapsed, y = predicted, 
+                          color = factor(lead_diff))) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = factor(lead_diff)),
+              alpha = 0.25, color = NA) +
+  geom_line(linewidth = 1.5) +
+  scale_colour_viridis_d(option = "D") +
+  scale_fill_viridis_d(option = "D") +
+  labs(x = "Time Elapsed (seconds)", 
+       y = "Predicted Home Win Probability",
+       color = "Lead Diff", 
+       fill = "Lead Diff") +
+  theme_minimal()
+```
 
 
