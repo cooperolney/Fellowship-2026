@@ -177,6 +177,19 @@ ggplot(duke_uconn_log, aes(x = time_elapsed, y = win_prob)) +
   theme_minimal()
 ```
 
+# Frequentist Logistic Regression Duke vs UConn w/ Ratings
+```{r}
+final_data <- readRDS("final_data.rds")
+
+# This won't run locally
+log_mod_rating <- glm(home_win ~ lead_diff + time_elapsed + rating_diff + 
+                      time_elapsed:lead_diff + time_elapsed:rating_diff,
+               data = final_data, family = "binomial")
+
+log_mod_rating |> tidy()
+```
+
+
 
 # Bayesian Logistic Regression with Ratings Duke vs. UConn
 
@@ -282,13 +295,16 @@ mbb_pbp_2026_clean <- mbb_pbp_2026 |>
   arrange(game_id, time_elapsed, desc(row_number())) |>
   distinct(game_id, time_elapsed, .keep_all = TRUE)
 
-write_csv(mbb_pbp_2026_clean, "mbb_pbp_2026_clean.csv")
+#write_csv(mbb_pbp_2026_clean, "mbb_pbp_2026_clean.csv")
 ```
 
 
 # Function for Predicted Probability Generation
 ```{r}
-get_win_prob <- function(game_data, model_type, mle_clean, db_full, log_mod) {
+get_win_prob <- function(game_data, model_type, mle_clean, db_full, log_mod, 
+                         brm_mod = NULL,
+                         min_lead_diff, max_lead_diff,
+                         min_rating_diff, max_rating_diff) {
   
   if (model_type == "mle") {
     
@@ -305,8 +321,22 @@ get_win_prob <- function(game_data, model_type, mle_clean, db_full, log_mod) {
     result <- game_data |>
       mutate(win_prob = predict(log_mod, newdata = pick(everything()), type = "response"))
     
+  } else if (model_type == "brm") {
+    
+    newdata <- game_data |>
+      mutate(
+        time_scaled   = time_elapsed / 2400,
+        lead_scaled   = (lead_diff - min_lead_diff) / (max_lead_diff - min_lead_diff),
+        rating_scaled = (rating_diff - min_rating_diff) / (max_rating_diff - min_rating_diff)
+      )
+    
+    result <- game_data |>
+      mutate(
+        win_prob = posterior_epred(brm_mod, newdata = newdata) |> colMeans()
+      )
+    
   } else {
-    stop("model_type must be one of: 'mle', 'db', 'log'")
+    stop("model_type must be one of: 'mle', 'db', 'log', 'brm'")
   }
   
   return(result)
@@ -315,11 +345,21 @@ get_win_prob <- function(game_data, model_type, mle_clean, db_full, log_mod) {
 
 ```{r}
 # Duke vs UConn Game
-duke_uconn_game <- mbb_pbp_2026_clean |> filter(game_id == "401856577")
+duke_uconn_game <- mbb_pbp_2026_clean |> filter(game_id == "401856577") |>
+  mutate(rating_diff = 6.3)
 
 duke_uconn_mle <- get_win_prob(duke_uconn_game, "mle", mle_clean, db_full, log_mod)
+
 duke_uconn_db  <- get_win_prob(duke_uconn_game, "db",  mle_clean, db_full, log_mod)
+
 duke_uconn_log <- get_win_prob(duke_uconn_game, "log", mle_clean, db_full, log_mod)
+
+duke_uconn_brm <- get_win_prob(duke_uconn_game, "brm", mle_clean, db_full, log_mod,
+                                brm_mod = brm_full,
+                                min_lead_diff   = min_lead_diff,
+                                max_lead_diff   = max_lead_diff,
+                                min_rating_diff = min_rating_diff,
+                                max_rating_diff = max_rating_diff)
 
 
 # National Championship Game (Michigan vs UConn)
@@ -353,4 +393,53 @@ ggplot(duke_va_db, aes(x = time_elapsed, y = win_prob)) +
   theme_minimal()
 ```
 
+```{r}
+# Duke vs UConn Comparing all 4 Methods
+
+duke_uconn_game <- mbb_pbp_2026_clean |> filter(game_id == "401856577") |>
+  mutate(rating_diff = 6.3)
+
+duke_uconn_mle <- get_win_prob(duke_uconn_game, "mle", mle_clean, db_full, log_mod)
+
+duke_uconn_db  <- get_win_prob(duke_uconn_game, "db",  mle_clean, db_full, log_mod)
+
+duke_uconn_log <- get_win_prob(duke_uconn_game, "log", mle_clean, db_full, log_mod)
+
+duke_uconn_brm <- get_win_prob(duke_uconn_game, "brm", mle_clean, db_full, log_mod,
+                                brm_mod = brm_full,
+                                min_lead_diff   = min_lead_diff,
+                                max_lead_diff   = max_lead_diff,
+                                min_rating_diff = min_rating_diff,
+                                max_rating_diff = max_rating_diff)
+
+# Plot, change dataframe
+ggplot(duke_uconn_brm, aes(x = time_elapsed, y = win_prob)) +
+  geom_line() +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = "Time Elapsed (seconds)",
+       y = "Predicted Home Win Probability") +
+  theme_minimal()
+
+# All 4 Methods
+duke_uconn_all <- bind_rows(
+  duke_uconn_mle |> mutate(model = "MLE"),
+  duke_uconn_db  |> mutate(model = "Dynamic Bayes"),
+  duke_uconn_log |> mutate(model = "Logistic Regression"),
+  duke_uconn_brm |> mutate(model = "Bayesian Logistic")
+)
+
+ggplot(duke_uconn_all, aes(x = time_elapsed, y = win_prob, color = model)) +
+  geom_line(linewidth = 0.5, alpha = 0.6) +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
+  scale_y_continuous(limits = c(0, 1)) +
+  scale_x_continuous(breaks = seq(0, 2400, by = 300)) +
+  labs(title = "Duke vs UConn - All Models",
+       x = "Time Elapsed (seconds)",
+       y = "Predicted Home Win Probability (Duke)",
+       color = "Model") +
+  theme_minimal()
+```
 
