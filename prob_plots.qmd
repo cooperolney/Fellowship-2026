@@ -421,13 +421,14 @@ duke_uconn_brm <- get_win_prob(duke_uconn_game, "brm", mle_clean, db_full, log_m
                                      max_rating_diff = max_rating_diff)
 
 # Plot, change dataframe
-ggplot(duke_uconn_brm, aes(x = time_elapsed, y = win_prob)) +
+ggplot(duke_uconn_db, aes(x = time_elapsed, y = win_prob)) +
   geom_line() +
   geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray") +
   geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
   scale_y_continuous(limits = c(0, 1)) +
   labs(x = "Time Elapsed (seconds)",
-       y = "Predicted Home Win Probability") +
+       y = "Predicted Home Win Probability",
+       title = "Duke vs UConn - Dynamic Bayes") +
   theme_minimal()
 
 # All 5 Methods
@@ -449,6 +450,122 @@ ggplot(duke_uconn_all, aes(x = time_elapsed, y = win_prob, color = model)) +
        x = "Time Elapsed (seconds)",
        y = "Predicted Home Win Probability (Duke)",
        color = "Model") +
-  theme_minimal()
+  theme_minimal() +
+  theme(legend.position = "bottom")
 ```
+
+# MLE Avg Home Team Win Prob
+```{r}
+# Michigan vs UConn
+
+# Version A: Michigan as home (already have this)
+mich_uconn_mle_A <- mich_uconn_mle
+
+# Version B: UConn as home
+mich_uconn_mle_B <- mich_uconn_mle_A |>
+  mutate(lead_diff = -lead_diff) |>
+  select(-n_games, -n_wins, -win_prob) |>  
+  left_join(mle_clean, by = c("time_elapsed", "lead_diff")) 
+
+# Combine
+mich_uconn_mle_neutral <- mich_uconn_mle_A |>
+  select(game_id, time_elapsed, win_prob_A = win_prob) |>
+  left_join(
+    mich_uconn_mle_B |> select(game_id, time_elapsed, win_prob_B = win_prob),
+    by = c("game_id", "time_elapsed")
+  ) |>
+  mutate(win_prob_neutral = (win_prob_A + (1 - win_prob_B)) / 2)
+
+# Plot
+ggplot(mich_uconn_mle_neutral, aes(x = time_elapsed, y = win_prob_neutral)) +
+  geom_line(linewidth = 0.4) +
+  geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
+  scale_x_continuous(breaks = seq(0, 2400, by = 300)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(title = "Michigan vs UConn MLE Win Probability",
+       x = "Time Elapsed (seconds)",
+       y = "Predicted Win Probability (Michigan)") +
+  theme_minimal(base_size = 14)
+```
+
+
+# Dynamic Bayes Avg Home Team Win Prob
+```{r}
+# Michigan vs UConn
+
+# Version A: Michigan as home (already have this)
+mich_uconn_db_A <- mich_uconn_db 
+
+
+# Version B: UConn as home
+mich_uconn_db_B <- mich_uconn_db_A |>
+  mutate(lead_diff = -lead_diff) |>
+  select(-N_window, -n_window, -prior, -alpha, -beta, -win_prob) |>  
+  left_join(db_full, by = c("time_elapsed", "lead_diff")) 
+
+
+# Combine
+mich_uconn_db_neutral <- mich_uconn_db_A |>
+  select(game_id, time_elapsed, win_prob_A = win_prob) |>
+  left_join(
+    mich_uconn_db_B |> select(game_id, time_elapsed, win_prob_B = win_prob),
+    by = c("game_id", "time_elapsed")
+  ) |>
+  mutate(win_prob_neutral = (win_prob_A + (1 - win_prob_B)) / 2)
+
+
+# Plot
+ggplot(mich_uconn_db_neutral, aes(x = time_elapsed, y = win_prob_neutral)) +
+  geom_line(linewidth = 0.4) +
+  geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
+  scale_x_continuous(breaks = seq(0, 2400, by = 300)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(title = "Michigan vs UConn Dynamic Bayes Win Probability",
+       x = "Time Elapsed (seconds)",
+       y = "Predicted Win Probability (Michigan)") +
+  theme_minimal(base_size = 14)
+
+#write_csv(mich_uconn_db_neutral, "mich_uconn_db_neutral.csv")
+
+
+# Duke vs. UConn
+
+# Version A: Duke as home (already have this)
+duke_uconn_db_A <- duke_uconn_db 
+
+
+# Version B: UConn as home
+duke_uconn_db_B <- duke_uconn_db_A |>
+  mutate(lead_diff = -lead_diff) |>
+  select(-N_window, -n_window, -prior, -alpha, -beta, -win_prob) |>  
+  left_join(db_full, by = c("time_elapsed", "lead_diff")) 
+
+
+# Combine
+duke_uconn_db_neutral <- duke_uconn_db_A |>
+  select(game_id, time_elapsed, win_prob_A = win_prob) |>
+  left_join(
+    duke_uconn_db_B |> select(game_id, time_elapsed, win_prob_B = win_prob),
+    by = c("game_id", "time_elapsed")
+  ) |>
+  mutate(win_prob_neutral = (win_prob_A + (1 - win_prob_B)) / 2)
+
+
+# Plot
+ggplot(duke_uconn_db_neutral, aes(x = time_elapsed, y = win_prob_neutral)) +
+  geom_line(linewidth = 0.4) +
+  geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
+  scale_x_continuous(breaks = seq(0, 2400, by = 300)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(title = "Duke vs UConn Dynamic Bayes Win Probability",
+       x = "Time Elapsed (seconds)",
+       y = "Predicted Win Probability (Duke)") +
+  theme_minimal(base_size = 14)
+
+#write_csv(duke_uconn_db_neutral, "duke_uconn_db_neutral.csv")
+```
+
+
+
+
 
