@@ -5,7 +5,7 @@ format:
     theme: 
       light: flatly
       dark: darkly
-    css: style.css
+    css: closeread_test.css
     cr-style:
       section-background-color: "#009CDE" # color behind graphs
       narrative-background-color-sidebar: "#009CDE" # color behind text (sidebar)
@@ -17,9 +17,9 @@ format:
 ```{r}
 #| include: false
 library(tidyverse)
-duke_uconn_db <- read_csv("duke_uconn_db.csv")
-mich_uconn_db <- read_csv("mich_uconn_db.csv")
-duke_va_db <- read_csv("duke_va_db.csv")
+duke_uconn_db <- read_csv("data/duke_uconn_db.csv")
+mich_uconn_db <- read_csv("data/mich_uconn_db.csv")
+duke_va_db <- read_csv("data/duke_va_db.csv")
 
 plot_duke_uconn <- ggplot(duke_uconn_db, aes(x = time_elapsed, y = win_prob)) +
   geom_line(linewidth = 0.4) +
