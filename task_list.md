@@ -1,5 +1,19 @@
 # Task List
 
+## Tasks 7/10
+
+1. Plotly stuff with score.
+
+2. Dynamic Bayes and MLE average home teams win probability.
+
+3. Logistic regression and bayesian logistic: incorporate 3.3 differential into any home team. predict when differential is equal to 0.
+
+4. Mess around with theme of graph.
+
+5. Quarto blog for each topic (one for MLE/Dynamic Bayes, one for logistic/Bayesian logistic, one for closeread, etc.).
+
+6. Can start on a poster! (use posterdown). 
+
 ## Tasks for 7/7
 
 1. Make some probability plots comparing the 4 different methods.
