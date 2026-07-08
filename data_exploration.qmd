@@ -21,7 +21,7 @@ pak::pak("sportsdataverse/hoopR")
 # pbp for 2026 season
 tictoc::tic()
 progressr::with_progress({
-  mbb_pbp <-  hoopR::load_mbb_pbp()
+  mbb_pbp <-  hoopR::load_mbb_pbp(seasons = 2026)
 })
 tictoc::toc()
 
@@ -736,6 +736,81 @@ bracket_championship <- bracket_final_4 +
 bracket_championship
 ```
 
+# Testing Plotly Stuff
+```{r}
+library(plotly)
+
+# Duke vs UConn, game ends 72-73.
+
+duke_uconn_scores_raw <- mbb_pbp |>
+  filter(game_id == "401856577") |>
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining) |>
+  select(time_elapsed, home_score, away_score) |>
+  arrange(time_elapsed) |>
+  group_by(time_elapsed) |>
+  slice_tail(n = 1) |>
+  ungroup()
+
+duke_uconn_db_scores <- duke_uconn_db |>
+  left_join(duke_uconn_scores_raw, by = "time_elapsed") |>
+  fill(home_score, away_score, .direction = "down") |>
+  mutate(
+    Score = paste0(
+      "Duke: ", home_score, " | UConn: ", away_score, "<br>"
+    )
+  )
+
+# Plot
+plot_duke_uconn <- ggplot(duke_uconn_db_scores, aes(x = time_elapsed, y = win_prob,
+                                                    label = Score)) +
+  geom_line(linewidth = 0.4) +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
+  scale_x_continuous(breaks = seq(0, 2400, by = 300)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(title = "Duke vs UConn Dynamic Bayes Win Probability",
+       x = "Time Elapsed (seconds)",
+       y = "Predicted Home Win Probability (Duke)") +
+  theme_minimal(base_size = 14)
+
+ggplotly(plot_duke_uconn, tooltip = "label")
+
+
+# Michigan vs UConn, game ends 69-63
+mich_uconn_scores_raw <- mbb_pbp |>
+  filter(game_id == "401856600") |>
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining) |>
+  select(time_elapsed, home_score, away_score) |>
+  arrange(time_elapsed) |>
+  group_by(time_elapsed) |>
+  slice_tail(n = 1) |>
+  ungroup()
+
+mich_uconn_db_scores <- mich_uconn_db |>
+  left_join(mich_uconn_scores_raw, by = "time_elapsed") |>
+  fill(home_score, away_score, .direction = "down") |>
+  mutate(
+    Score = paste0(
+      "Michigan: ", home_score, " | UConn: ", away_score, "<br>"
+    )
+  )
+
+# Plot
+plot_mich_uconn <- ggplot(mich_uconn_db_scores, aes(x = time_elapsed, y = win_prob,
+                                                    label = Score)) +
+  geom_line(linewidth = 0.4) +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
+  scale_x_continuous(breaks = seq(0, 2400, by = 300)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(title = "Michigan vs UConn Dynamic Bayes Win Probability",
+       x = "Time Elapsed (seconds)",
+       y = "Predicted Home Win Probability (Michigan)") +
+  theme_minimal(base_size = 14)
+
+ggplotly(plot_mich_uconn, tooltip = "label")
+
+```
 
 
 

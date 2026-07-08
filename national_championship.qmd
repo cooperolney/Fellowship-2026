@@ -17,7 +17,11 @@ format:
 ```{r}
 #| include: false
 library(tidyverse)
+library(hoopR)
 library(MMBracketR)
+library(plotly)
+
+mbb_pbp <-  hoopR::load_mbb_pbp(seasons = 2026)
 
 duke_uconn_db <- read_csv("data/duke_uconn_db.csv")
 mich_uconn_db <- read_csv("data/mich_uconn_db.csv")
@@ -70,6 +74,65 @@ plot_mich_uconn_neutral <- ggplot(mich_uconn_db_neutral, aes(x = time_elapsed, y
        y = "Predicted Win Probability (Michigan)") +
   theme_minimal(base_size = 14)
 
+
+# Duke vs UConn Plotly
+duke_uconn_scores_raw <- mbb_pbp |>
+  filter(game_id == "401856577") |>
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining) |>
+  select(time_elapsed, home_score, away_score) |>
+  arrange(time_elapsed) |>
+  group_by(time_elapsed) |>
+  slice_tail(n = 1) |>
+  ungroup()
+
+duke_uconn_db_scores <- duke_uconn_db_neutral |>
+  left_join(duke_uconn_scores_raw, by = "time_elapsed") |>
+  fill(home_score, away_score, .direction = "down") |>
+  mutate(
+    Score = paste0(
+      "Duke: ", home_score, " | UConn: ", away_score, "<br>"
+    )
+  )
+
+plotly_duke_uconn_neutral <- ggplot(duke_uconn_db_scores, aes(x = time_elapsed, y = win_prob_neutral, label = Score)) +
+  geom_line(linewidth = 0.4) +
+  geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
+  scale_x_continuous(breaks = seq(0, 2400, by = 300)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(title = "Duke vs UConn Dynamic Bayes Win Probability",
+       x = "Time Elapsed (seconds)",
+       y = "Predicted Win Probability (Duke)") +
+  theme_minimal(base_size = 14)
+
+
+# Michigan vs UConn Plotly
+mich_uconn_scores_raw <- mbb_pbp |>
+  filter(game_id == "401856600") |>
+  mutate(time_elapsed = 2400 - end_game_seconds_remaining) |>
+  select(time_elapsed, home_score, away_score) |>
+  arrange(time_elapsed) |>
+  group_by(time_elapsed) |>
+  slice_tail(n = 1) |>
+  ungroup()
+
+mich_uconn_db_scores <- mich_uconn_db_neutral |>
+  left_join(mich_uconn_scores_raw, by = "time_elapsed") |>
+  fill(home_score, away_score, .direction = "down") |>
+  mutate(
+    Score = paste0(
+      "Michigan: ", home_score, " | UConn: ", away_score, "<br>"
+    )
+  )
+
+plotly_mich_uconn_neutral <- ggplot(mich_uconn_db_scores, aes(x = time_elapsed, y = win_prob_neutral, label = Score)) +
+  geom_line(linewidth = 0.4) +
+  geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
+  scale_x_continuous(breaks = seq(0, 2400, by = 300)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(title = "Michigan vs UConn Dynamic Bayes Win Probability",
+       x = "Time Elapsed (seconds)",
+       y = "Predicted Win Probability (Michigan)") +
+  theme_minimal(base_size = 14)
 
 # Tournament Bracket
 # First Round
@@ -526,21 +589,21 @@ bracket_elite_8
 # Duke vs UConn - 2026 Elite Eight
 
 :::{.case-study-intro}
-Explain how we can get the in game win probability for the home team (Duke) based on training the dynamic bayes model on 2025 data and applying it to this game. Then introduce the game and what was expected to happen, give more context.
+To estimate in-game win probability, a Dynamic Bayesian model was trained using play-by-play data from the 2025 NCAA Men's Basketball season. The model learns how factors such as score differential and time elapsed influence the likelihood of a team winning. As a game progresses, the model continuously updates its estimate whenever new information becomes available, producing a second-by-second view of how each team's chances change over time.
 
-To estimate in-game win probability, a Dynamic Bayesian model was trained using play-by-play data from the 2025 NCAA Men's Basketball season. The model learns how factors such as score differential, time elapsed, and team rating differential influence the likelihood of the home team winning. As a game progresses, the model continuously updates its estimate whenever new information becomes available, producing a second-by-second view of how each team's chances change over time.
+Because NCAA Tournament games are played at neutral sites, this analysis does not designate either team as the home team and does not incorporate pregame information such as team strength or betting odds. As a result, every game begins with each team assigned a 50% chance of winning. From that point forward, the win probability changes only in response to events that occur during the game itself.
 
-The following example examines the 2026 Elite Eight matchup between Duke and UConn. Entering the game, Duke was one of the favorites to win the national championship. UConn entered the game with championship experience and a roster capable of competing with any team in the country. While pregame expectations favored Duke, the game ultimately became one of the most memorable contests of the tournament and provides an excellent example of how win probability can change throughout a basketball game.
+The following example examines the 2026 Elite Eight matchup between Duke and UConn. Entering the game, Duke was one of the favorites to win the national championship, while UConn brought championship experience and a roster capable of competing with any team in the country. Although pregame expectations favored Duke, those expectations are intentionally excluded from the model, allowing us to focus solely on how the action on the court influenced each team's chances of victory.
 
 :::
 
 :::{.cr-section}
 
-[This Elite Eight matchup featured the Duke Blue Devils and the UConn Huskies, the No. 1 and No. 2 seeds from the East Region, respectively. The win probability curve below tracks Duke's estimated chance of victory throughout the game. Duke entered the game as the favorite as they are designated as the home team as the higher seed, and with a higher team rating they start the game with a higher than 50% win probability.]{.cr-bubble} @cr-game-plot-01
+[This Elite Eight matchup featured the Duke Blue Devils and the UConn Huskies, the No. 1 and No. 2 seeds from the East Region, respectively. Since the game was played at a neutral site and the model does not incorporate team strength, both teams begin with an equal 50% chance of winning. The win probability curve below tracks how Duke's chances evolved throughout the game based solely on the time and score.]{.cr-bubble} @cr-game-plot-01
 
-[For much of the first half, Duke controlled the game. Efficient scoring, strong defensive possessions, and a growing lead pushed the Blue Devils' win probability steadily upward. When Duke extended its advantage to 19 points late in the half, the model estimated a 98.6% chance of victory, suggesting that a UConn comeback was highly unlikely based on historical game outcomes.]{.cr-bubble} [@cr-game-plot-01]{pan-to="0%,70%" scale-by="2.5"}
+[For much of the first half, Duke controlled the game. Efficient scoring, strong defensive possessions, and a growing lead pushed the Blue Devils' win probability steadily upward. When Duke extended its advantage to 19 points late in the half, the model estimated a 97.9% chance of victory, suggesting that a UConn comeback was highly unlikely based on historical game outcomes.]{.cr-bubble} [@cr-game-plot-01]{pan-to="0%,70%" scale-by="2.5"}
 
-[The second half told a different story. UConn gradually erased Duke's lead, causing the win probability curve to decline as time expired. Even after the Huskies' rally, Duke still held an estimated 88% chance of winning on the game's final possession. However, basketball outcomes are never certain. Freshman Braylon Mullins connected on a 35-foot buzzer-beating three-pointer, instantly shifting the game's result, and the model's final prediction from a likely Duke victory to a UConn win.]{.cr-bubble} [@cr-game-plot-01]{pan-to="-100%,25%" scale-by="2"}
+[The second half told a different story. UConn gradually erased Duke's lead, causing the win probability curve to decline as time expired. Even after the Huskies' rally, Duke still held an estimated 85.3% chance of winning on the game's final possession. However, basketball outcomes are never certain. Freshman Braylon Mullins connected on a 35-foot buzzer-beating three-pointer, instantly shifting the game's result, and the model's final prediction from a likely Duke victory to a UConn win.]{.cr-bubble} [@cr-game-plot-01]{pan-to="-100%,25%" scale-by="2"}
 
 ![UConn players celebrating after winning the game](images/uconn.jpg){.cr-bubble} @cr-game-plot-01
 
@@ -548,7 +611,8 @@ The following example examines the 2026 Elite Eight matchup between Duke and UCo
 ```{r}
 #| echo: false
 #| warning: false
-plot_duke_uconn
+ggplotly(plotly_duke_uconn_neutral, tooltip = "label") |>
+  config(displayModeBar = FALSE)
 ```
 
 :::
@@ -558,7 +622,7 @@ plot_duke_uconn
 ```{r}
 #| echo: false
 #| warning: false
-plot_duke_uconn + theme(labs(title=NULL, x=NULL, y=NULL))
+plot_duke_uconn_neutral + theme(labs(title=NULL, x=NULL, y=NULL))
 ```
 
 :::
@@ -612,9 +676,9 @@ The 2026 NCAA National Championship represented the culmination of one of the mo
 
 [The National Championship featured the Michigan Wolverines and the UConn Huskies. Michigan entered the game as the No. 1 seed from the Midwest Region and one of the most consistent teams in the country throughout the season. UConn, the No. 2 seed from the East Region, arrived after a dramatic tournament run that included an improbable comeback victory over Duke in the Elite Eight. With both teams playing their best basketball of the season, the championship matchup promised to be a closely contested battle.]{.cr-bubble} @cr-game-plot-02
 
-[The opening half demonstrated how evenly matched these teams were. Michigan built an early five point lead and briefly appeared to take control of the game, but UConn responded with a strong stretch of play that gradually erased much of the deficit. As the Huskies gained momentum, Michigan's win probability steadily declined, reaching a first-half low of 52.1%. At that point, the game was effectively a statistical coin flip.]{.cr-bubble} [@cr-game-plot-02]{pan-to="40%,25%" scale-by="2.5"}
+[The opening half demonstrated how evenly matched these teams were. Michigan built an early five point lead and briefly appeared to take control of the game, but UConn responded with a strong stretch of play that gradually erased much of the deficit. As the Huskies gained momentum, Michigan's win probability steadily declined, reaching a first-half low of 39.6%. At that point, the game was effectively a statistical coin flip.]{.cr-bubble} [@cr-game-plot-02]{pan-to="40%,-20%" scale-by="2.5"}
 
-[Unlike the dramatic swings seen in the Duke UConn game, the second half of the championship was defined by Michigan's ability to maintain control. The Wolverines consistently held the lead, but UConn remained within striking distance. With approximately 8:30 remaining in the game, the Huskies mounted one final push and cut the deficit to five points, causing Michigan's win probability to fall to 80.6%. Although Michigan remained the favorite, the outcome was not yet certain.]{.cr-bubble} [@cr-game-plot-02]{pan-to="-80%,25%" scale-by="2"}
+[Unlike the dramatic swings seen in the Duke UConn game, the second half of the championship was defined by Michigan's ability to maintain control. The Wolverines consistently held the lead, but UConn remained within striking distance. With approximately 8:30 remaining in the game, the Huskies mounted one final push and cut the deficit to five points, causing Michigan's win probability to fall to 76.2%. Although Michigan remained the favorite, the outcome was not yet certain.]{.cr-bubble} [@cr-game-plot-02]{pan-to="-80%,25%" scale-by="2"}
 
 [UConn's late rally ultimately proved to be its final challenge. Michigan responded with timely scoring, controlled possessions, and key defensive stops to prevent the Huskies from drawing any closer. As the remaining time dwindled, Michigan's win probability climbed steadily toward certainty. When the final buzzer sounded, the Wolverines had completed their championship run and secured the 2026 NCAA National Championship.]{.cr-bubble} [@cr-game-plot-02]{pan-to="-100%,50%" scale-by="2.5"}
 
@@ -625,7 +689,8 @@ The 2026 NCAA National Championship represented the culmination of one of the mo
 ```{r}
 #| echo: false
 #| warning: false
-plot_mich_uconn
+ggplotly(plotly_mich_uconn_neutral, tooltip = "label") |>
+  config(displayModeBar = FALSE)
 ```
 
 :::
@@ -635,7 +700,7 @@ plot_mich_uconn
 ```{r}
 #| echo: false
 #| warning: false
-plot_mich_uconn + theme(labs(title=NULL, x=NULL, y=NULL))
+plot_mich_uconn_neutral + theme(labs(title=NULL, x=NULL, y=NULL))
 ```
 
 :::
