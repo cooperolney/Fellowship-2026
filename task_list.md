@@ -1,6 +1,20 @@
 # Task List
 
-## Tasks 7/10
+## Tasks for 7/14
+
+1. Plotly with team colours for score.
+
+2. Logistic regression and bayesian logistic: incorporate 3.3 differential into any home team. predict when differential is equal to 0.
+
+3. Keep working on Quarto blog.
+
+4. Stuff from Tori's email (or can push that).
+
+5. Can start on a poster! (use posterdown). 
+
+6. Skim 4th quarter paper on modeling end of game win probability.
+
+## Tasks for 7/10
 
 1. Plotly stuff with score.
 
