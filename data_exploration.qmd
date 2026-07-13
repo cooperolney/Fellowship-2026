@@ -87,7 +87,7 @@ duke_uconn |>
 mbb_pbp_2026 |>
   group_by(game_id) |>
   summarise(n_plays = n()) |>
-  arrange(desc(n_plays))
+  arrange(n_plays)
 
 # Game with least plays: the issue is that espn seems to be missing plays and not an issue with the scraping
 mbb_pbp_2026 |> filter(game_id == 401824072) |> relocate(home_team_name, away_team_name)
@@ -756,7 +756,8 @@ duke_uconn_db_scores <- duke_uconn_db |>
   fill(home_score, away_score, .direction = "down") |>
   mutate(
     Score = paste0(
-      "Duke: ", home_score, " | UConn: ", away_score, "<br>"
+      "<span style='color:#00539B'>Duke: ", home_score, "</span> | ",
+      "<span style='color:#E4002B'>UConn: ", away_score, "</span>"
     )
   )
 
@@ -773,7 +774,15 @@ plot_duke_uconn <- ggplot(duke_uconn_db_scores, aes(x = time_elapsed, y = win_pr
        y = "Predicted Home Win Probability (Duke)") +
   theme_minimal(base_size = 14)
 
-ggplotly(plot_duke_uconn, tooltip = "label")
+ggplotly(plot_duke_uconn, tooltip = "label") |>
+  layout(
+    hoverlabel = list(
+      bgcolor = "white",
+      bordercolor = "black",
+      font = list(color = "black")
+    )
+  )
+
 
 
 # Michigan vs UConn, game ends 69-63

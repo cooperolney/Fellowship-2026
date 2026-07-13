@@ -90,7 +90,8 @@ duke_uconn_db_scores <- duke_uconn_db_neutral |>
   fill(home_score, away_score, .direction = "down") |>
   mutate(
     Score = paste0(
-      "Duke: ", home_score, " | UConn: ", away_score, "<br>"
+      "<span style='color:#00539B'>Duke: ", home_score, "</span> | ",
+      "<span style='color:#E4002B'>UConn: ", away_score, "</span>"
     )
   )
 
@@ -120,7 +121,8 @@ mich_uconn_db_scores <- mich_uconn_db_neutral |>
   fill(home_score, away_score, .direction = "down") |>
   mutate(
     Score = paste0(
-      "Michigan: ", home_score, " | UConn: ", away_score, "<br>"
+      "<span style='color:#ffcb05'>Michigan: ", home_score, "</span> | ",
+      "<span style='color:#E4002B'>UConn: ", away_score, "</span>"
     )
   )
 
@@ -612,7 +614,14 @@ The following example examines the 2026 Elite Eight matchup between Duke and UCo
 #| echo: false
 #| warning: false
 ggplotly(plotly_duke_uconn_neutral, tooltip = "label") |>
-  config(displayModeBar = FALSE)
+  config(displayModeBar = FALSE) |>
+  layout(
+    hoverlabel = list(
+      bgcolor = "white",
+      bordercolor = "black",
+      font = list(color = "black")
+    )
+  )
 ```
 
 :::
@@ -690,7 +699,14 @@ The 2026 NCAA National Championship represented the culmination of one of the mo
 #| echo: false
 #| warning: false
 ggplotly(plotly_mich_uconn_neutral, tooltip = "label") |>
-  config(displayModeBar = FALSE)
+  config(displayModeBar = FALSE) |>
+  layout(
+    hoverlabel = list(
+      bgcolor = "white",
+      bordercolor = "black",
+      font = list(color = "black")
+    )
+  )
 ```
 
 :::
