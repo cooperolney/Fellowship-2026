@@ -1,5 +1,15 @@
 # Task List
 
+## Tasks for 7/21
+
+1. Finish revising Quarto blog (and implement logistic regression changes).
+
+2. Finish letter for Tori's email.
+
+3. Work on poster (prioritize making a outline/draft on Monday).
+
+4. Skim 4th quarter paper on modeling end of game win probability.
+
 ## Tasks for 7/17
 
 1. Logistic regression and bayesian logistic: incorporate 3.3 differential into any home team. predict when differential is equal to 0.
