@@ -1,0 +1,140 @@
+---
+title: "Modeling and Visualizing In-Game Win Probability in NCAA Men's Basketball"
+author:
+  - name: Cooper Olney
+affiliation:
+  - address: Department of Math, Computer Science, and Statistics <br> St. Lawrence University <br> Advised by Dr. Matt Higham
+column_numbers: 3
+output: 
+  posterdown::posterdown_html:
+   self_contained: true
+poster_height: "36in"
+poster_width: "48in"
+titlebox_borderwidth: "0cm"
+sectitle_textsize: "62pt"
+primary_colour: "#009CDE"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE,
+	singlespacing = TRUE
+)
+library(tidyverse)
+library(hoopR)
+library(broom)
+library(ggeffects)
+library(MMBracketR)
+library(plotly)
+library(brms)
+library(rvest)
+library(fuzzyjoin)
+library(data.table)
+library(here)
+```
+
+# Abstract
+
+- Built and compared multiple statistical models to estimate in-game win probability for NCAA men’s basketball.
+
+- Visualized how the home team's win probability changes throughout a game using dynamic probability plots.
+
+- Designed an interactive data storytelling experience with Quarto Closeread to showcase model performance and key game moments.
+
+
+# Data
+
+2025 NCAA men's basketball play-by-play data was collected using the `hoopR` package.
+
+Predictor variables used in the models included:
+
+- **Time Elapsed** - seconds played in the game
+
+- **Score Differential** - point margin between teams (home - away)
+
+- **Rating Differential** - difference in team ratings (home - away)
+
+The final training dataset contained:
+
+- 6,136 games & 14,732,536 play-by-play observations
+
+
+# Logistic Regression Models
+
+- Multiple frequentist and Bayesian logistic regression models were developed to estimate win probability from game state variables and team strength.
+
+```{r, out.width = "75%", fig.align = "center"}
+#| echo: false
+#| warning: false
+
+brm_neutral <- readRDS("../brm_neutral.rds")
+
+brm_neutral + labs(fill = "Score Diff",
+                   color = "Score Diff",
+                   caption = "Predicted win probability by score differential (rating_diff = 0).")
+```
+
+- Early in games, team strength and home-court effects influence win probability. As time expires, score differential becomes the dominant predictor of the game's outcome.
+
+
+# Dynamic Bayesian Model
+
+- Estimates win probability directly from historical game outcomes rather than fitting a regression model.
+
+- For each combination of `time_elapsed` and `score_diff`, the model uses previous games to estimate the probability of the home team winning.
+
+```{r, out.width = "75%", fig.align = "center"}
+#| echo: false
+#| warning: false
+
+db_heatmap <- readRDS("../db_heatmap_plot.rds")
+
+db_heatmap +
+  labs(title = "Dynamic Bayesian Heatmap",
+       caption = "Estimated home-team win probability by game state.")
+```
+
+- Score differential becomes increasingly important as time expires, with large late-game leads corresponding to win probabilities near 0% or 100%.
+
+- A Beta-Binomial framework smooths estimates in regions with limited historical observations, reducing extreme probabilities caused by sparse data.
+
+
+# Predicted Probability Plots
+
+- The trained models can be applied to individual games to visualize how win probability changes second-by-second.
+
+![](../prob_plot_example.png){width=85% style="display: block; margin: 0 auto;"}
+
+- The plot captures how momentum shifts throughout a game, highlighting key moments and turning points.
+
+- Win probability begins at exactly 50% because the Dynamic Bayes model depends only on game state and the game was played at a neutral site.
+
+
+# Closeread
+
+- Quarto Closeread was used to create an interactive "scrollytelling" experience that guides readers through the key moments of March Madness and the 2026 National Championship game.
+
+![](../closeread_example.png){width=100% style="display: block; margin: 0 auto;"}
+
+- Closeread synchronizes narrative text and visualizations as readers scroll through a document. Advancing through the document can trigger plots to zoom, pan, or transition to new views.
+
+- Custom CSS styling was used to enhance the presentation, including a picture-in-picture feature that appears only when a plot is zoomed.
+
+
+# Conclusions
+
+- In-game win probability models reveal how team strength, score differential, and time remaining combine to influence a team's chances of winning.
+
+- **Future Directions** - Train model on multiple seasons of data and incorporate additional games state variables.
+
+
+# References & Acknowledgements
+
+- Johnson, A. A., Ott, M. Q., & Dogucu, M. (2022). Bayes rules! An introduction to applied Bayesian modeling.
+
+- Maddox, J., Sides R., & Harvill L. J. (2022). Bayesian estimation of in-game home team win probability for college basketball.
+
+- Taylor, J. A. (2025). A Bayesian logistic regression framework for in-game win probability estimation in NCAA basketball.
+
