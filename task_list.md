@@ -1,5 +1,14 @@
 # Task List
 
+## Tasks for 7/23
+
+1. Make edits on the poster.
+
+2. Revise the Quarto closeread document based on comments.
+
+3. Skim 4th quarter paper on modeling end of game win probability.
+
+
 ## Tasks for 7/21
 
 1. Finish revising Quarto blog (and implement logistic regression changes).
