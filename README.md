@@ -1,80 +1,29 @@
-# Fellowship-2026
+# Modeling and Visualizing In-Game Win Probability in NCAA Men's Basketball
 
-## File List
+This repository contains the code, data processing workflows, statistical models, and visualizations developed for the 2026 fellowship project. 
 
-### bayesian_logistic.qmd
+## Project Goal
 
-- *Goal:* Applying a bayesian logistic model to a subset of data.
+The primary goal of this project was to investigate how in-game win probability can be estimated and visualized throughout NCAA men's basketball games to support data-driven storytelling. By combining statistical modeling with interactive visualizations, the project demonstrates how sports data can be transformed into engaging and informative narratives.
 
-- Clean the 2025 data by adding the needed columns and changing the data so it is 1 row for 1 second.
+## Data Collection & Preparation
 
-- Create the 2025 data subset (50 games)
+Play-by-play data was collected using the `hoopR` R package and includes NCAA men's basketball games from the 2025 season. The data was cleaned and transformed into a modeling dataset containing game state variables such as `time_elapsed`, and `score_differential`, and whether the home team evenutaully won. Additional information, including team ratings and neutral-site indicators was incorporated to support model development.
 
-- Apply a bayesian logistic model with lead, time and the interaction. Also a version with scaled variables.
+## Logistic Regression Models
 
-- Visualize the bayesian logistic models and compare it with the frequentist logistic model.
+Frequentist and Bayesian logistic regression models were developed to estimate the home team's in-game win probability. These models use variables such as `score_differential`, `time_elapsed`, and `rating_differential` to predict the probability that the home team will ultimately win a game. Multiple versions of the models were explored, including adjustments for neutral-site games and home-court advantage.
 
-- Scrape the rankings data from teamrankings.com
+## Maximum Likelihood Estimation & Dynamic Bayesian Models
 
-- Clean the data by fixing the mismatched team names.
+In addition to logistic regression, win probability was estimated directly from historical game outcomes using Maximum Likelihood Estimation (MLE) and Dynamic Bayesian methods. These approaches calculate probabilities based on how teams in similar game situations performed historically. The Dynamic Bayesian model incorporates Beta priors to stabilize estimates and improve performance in game states with limited historical observations.
 
-- Join the rankings variable with the play-by-play data.
+## Predicted Win Probability Plots
 
-- Apply a bayesian logisitc model with the rankings data, compare to previous model.
+The trained models were used to generate in-game win probability plots for individual 2026 NCAA men's basketball games. These visualizations track how the home team's chances of winning evolve throughout a game and highlight important momentum swings, scoring runs, and critical moments. Several model outputs were compared to better understand how different modeling approaches influence win probability estimates.
 
+## Interactive Data Storytelling with Closeread
 
-### bayerules_practice.qmd
-
-- Practice exercises from the Bayes Rules book.
-
-
-### data_exploration.qmd
-
-- Collect play-by-play data from the hoopR package.
-
-- Do some initial data exploration: look at Duke vs. UConn game, look at overtime game.
-
-- Create a frequentist logistic regression model with time, lead, and interaction term.
-
-- Create a regression and heatmap visualization of the model.
-
-- Visualize Duke vs. UConn win probability throughout the game.
-
-- Basic data summary which contains total games, total playoff games, and total teams.
-
-- Clean data by so there is 1 row for every second.
-
-
-### dynamic_bayes.qmd
-
-- *Goal:* Create a replica of the dynamic bayes (d) heatmap from the research paper.
-
-
-### mle_heatmap.qmd
-
-- *Goal:* Create a replica of the MLE (a) heatmap from the research paper.
-
-- Do the MLE calculation: win_prob = n_wins / n_games.
-
-- Create a heatmap with the basic data.
-
-- Create a heatmap with the cleaned (1 row per second) data.
-
-
-### notes.docx
-
-- Notes from reading the Bayes Rules book.
-
-
-### report.qmd
-
-- Contains a write up of the basic data summary stats and some of the plots.
-
-- Will continue to add descriptions to things as they are created.
-
-
-### toy folder --> toy_brms.R
-
-- Contains an example of the bayesian logisitic model and information on how it works.
+The project also explored the Quarto Closeread extension as a tool for interactive storytelling. Closeread combines narrative text with synchronized visualizations, allowing readers to explore key moments within games through scrolling, zooming, and guided annotations. Custom CSS features were developed to enhance the user experience, including picture-in-picture minimaps and dynamic plot highlighting.
 
 
