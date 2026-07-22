@@ -46,24 +46,24 @@ library(here)
 
 # Data
 
-2025 NCAA men's basketball play-by-play data was collected using the `hoopR` package.
+2025 NCAA men's basketball play-by-play data was collected using the `hoopR` package. Ratings data sourced from TeamRankings.
 
 Predictor variables used in the models included:
 
-- **Time Elapsed** - seconds played in the game
+- **Time Elapsed** - seconds played in the game.
 
-- **Score Differential** - point margin between teams (home - away)
+- **Score Differential** - point margin between teams (home - away).
 
-- **Rating Differential** - difference in team ratings (home - away)
+- **Rating Differential** - difference in team ratings (home - away).
 
 The final training dataset contained:
 
-- 6,136 games & 14,732,536 play-by-play observations
+- 6,136 games & 14,732,536 play-by-play observations.
 
 
 # Logistic Regression Models
 
-- Multiple frequentist and Bayesian logistic regression models were developed to estimate win probability from game state variables and team strength.
+- Frequentist and Bayesian logistic regression models were developed to estimate win probability from game state variables and team strength.
 
 ```{r, out.width = "75%", fig.align = "center"}
 #| echo: false
@@ -73,7 +73,10 @@ brm_neutral <- readRDS("../brm_neutral.rds")
 
 brm_neutral + labs(fill = "Score Diff",
                    color = "Score Diff",
-                   caption = "Predicted win probability by score differential (rating_diff = 0).")
+                   caption = "Predicted win probability by score differential, (rating_diff = 0).",
+                   title = "Bayesian Logistic Regression") +
+  theme_minimal(base_size = 20) +
+  theme(plot.caption = element_text(hjust = 0.5))
 ```
 
 - Early in games, team strength and home-court effects influence win probability. As time expires, score differential becomes the dominant predictor of the game's outcome.
@@ -93,12 +96,14 @@ db_heatmap <- readRDS("../db_heatmap_plot.rds")
 
 db_heatmap +
   labs(title = "Dynamic Bayesian Heatmap",
-       caption = "Estimated home-team win probability by game state.")
+       caption = "Estimated home-team win probability by game state.") +
+  theme_minimal(base_size = 20) +
+  theme(plot.caption = element_text(hjust = 0.5))
 ```
 
 - Score differential becomes increasingly important as time expires, with large late-game leads corresponding to win probabilities near 0% or 100%.
 
-- A Beta-Binomial framework smooths estimates in regions with limited historical observations, reducing extreme probabilities caused by sparse data.
+- A Beta prior smooths estimates in regions with limited historical observations, reducing extreme probabilities caused by sparse data.
 
 
 # Predicted Probability Plots
@@ -109,7 +114,7 @@ db_heatmap +
 
 - The plot captures how momentum shifts throughout a game, highlighting key moments and turning points.
 
-- Win probability begins at exactly 50% because the Dynamic Bayes model depends only on game state and the game was played at a neutral site.
+- Win probability begins at exactly 50% because the Dynamic Bayes model depends only on game state and it was played at a neutral site.
 
 
 # Closeread
@@ -127,7 +132,7 @@ db_heatmap +
 
 - In-game win probability models reveal how team strength, score differential, and time remaining combine to influence a team's chances of winning.
 
-- **Future Directions** - Train model on multiple seasons of data and incorporate additional games state variables.
+- **Future Directions** - Train model on multiple seasons of data, compare and validate the training models, and incorporate additional games state variables.
 
 
 # References & Acknowledgements
