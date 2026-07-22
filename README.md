@@ -26,4 +26,10 @@ The trained models were used to generate in-game win probability plots for indiv
 
 The project also explored the Quarto Closeread extension as a tool for interactive storytelling. Closeread combines narrative text with synchronized visualizations, allowing readers to explore key moments within games through scrolling, zooming, and guided annotations. Custom CSS features were developed to enhance the user experience, including picture-in-picture minimaps and dynamic plot highlighting.
 
+## Additional Project Repository
+
+Here is an additional project repository containing a Quarto Blog that goes over all aspects of the project: [https://github.com/cooperolney/Fellowship-Final-Report](https://github.com/cooperolney/Fellowship-Final-Report)
+
+Here is the Quarto Blog: [https://cooperolney.github.io/Fellowship-Final-Report/](https://cooperolney.github.io/Fellowship-Final-Report/)
+
 
