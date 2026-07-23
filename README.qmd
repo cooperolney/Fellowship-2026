@@ -1,4 +1,7 @@
-# Modeling and Visualizing In-Game Win Probability in NCAA Men's Basketball
+---
+title: "Modeling and Visualizing In-Game Win Probability in NCAA Men's Basketball"
+format: gfm
+---
 
 This repository contains the code, data processing workflows, statistical models, and visualizations developed for the 2026 fellowship project. 
 
@@ -6,7 +9,7 @@ This repository contains the code, data processing workflows, statistical models
 
 The primary goal of this project was to investigate how in-game win probability can be estimated and visualized throughout NCAA men's basketball games to support data-driven storytelling. By combining statistical modeling with interactive visualizations, the project demonstrates how sports data can be transformed into engaging and informative narratives.
 
-View the final interactive report:[https://cooperolney.github.io/Fellowship-Final-Report/posts/06_championship/](https://cooperolney.github.io/Fellowship-Final-Report/posts/06_championship/)
+View the final report: [https://cooperolney.github.io/Fellowship-Final-Report/posts/06_championship/](https://cooperolney.github.io/Fellowship-Final-Report/posts/06_championship/)
 
 ## Data Collection & Preparation
 
@@ -23,6 +26,24 @@ In addition to logistic regression, win probability was estimated directly from 
 ## Predicted Win Probability Plots
 
 The trained models were used to generate in-game win probability plots for individual 2026 NCAA men's basketball games. These visualizations track how the home team's chances of winning evolve throughout a game and highlight important momentum swings, scoring runs, and critical moments. Several model outputs were compared to better understand how different modeling approaches influence win probability estimates.
+
+```{r}
+#| warning: false
+#| echo: false
+#| include: false
+
+library(here)
+
+mich_uconn_mle_neutral_plot <- readRDS(here("data", "mich_uconn_mle_neutral_plot.rds"))
+```
+
+```{r}
+#| warning: false
+#| echo: false
+
+mich_uconn_mle_neutral_plot
+```
+
 
 ## Interactive Data Storytelling with Closeread
 

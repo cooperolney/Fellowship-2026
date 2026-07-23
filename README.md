@@ -1,58 +1,75 @@
----
-title: "Modeling and Visualizing In-Game Win Probability in NCAA Men's Basketball"
-format: gfm
----
+# Modeling and Visualizing In-Game Win Probability in NCAA Men’s Basketball
 
-This repository contains the code, data processing workflows, statistical models, and visualizations developed for the 2026 fellowship project. 
+
+This repository contains the code, data processing workflows,
+statistical models, and visualizations developed for the 2026 fellowship
+project.
 
 ## Project Goal
 
-The primary goal of this project was to investigate how in-game win probability can be estimated and visualized throughout NCAA men's basketball games to support data-driven storytelling. By combining statistical modeling with interactive visualizations, the project demonstrates how sports data can be transformed into engaging and informative narratives.
+The primary goal of this project was to investigate how in-game win
+probability can be estimated and visualized throughout NCAA men’s
+basketball games to support data-driven storytelling. By combining
+statistical modeling with interactive visualizations, the project
+demonstrates how sports data can be transformed into engaging and
+informative narratives.
 
-View the final report:[https://cooperolney.github.io/Fellowship-Final-Report/posts/06_championship/](https://cooperolney.github.io/Fellowship-Final-Report/posts/06_championship/)
+View the final report:
+<https://cooperolney.github.io/Fellowship-Final-Report/posts/06_championship/>
 
 ## Data Collection & Preparation
 
-Play-by-play data was collected using the `hoopR` R package and includes NCAA men's basketball games from the 2025 season. The data was cleaned and transformed into a modeling dataset containing game state variables such as `time_elapsed`, and `score_differential`, and whether the home team evenutaully won. Additional information, including team ratings and neutral-site indicators was incorporated to support model development.
+Play-by-play data was collected using the `hoopR` R package and includes
+NCAA men’s basketball games from the 2025 season. The data was cleaned
+and transformed into a modeling dataset containing game state variables
+such as `time_elapsed`, and `score_differential`, and whether the home
+team evenutaully won. Additional information, including team ratings and
+neutral-site indicators was incorporated to support model development.
 
 ## Logistic Regression Models
 
-Frequentist and Bayesian logistic regression models were developed to estimate the home team's in-game win probability. These models use variables such as `score_differential`, `time_elapsed`, and `rating_differential` to predict the probability that the home team will ultimately win a game. Multiple versions of the models were explored, including adjustments for neutral-site games and home-court advantage.
+Frequentist and Bayesian logistic regression models were developed to
+estimate the home team’s in-game win probability. These models use
+variables such as `score_differential`, `time_elapsed`, and
+`rating_differential` to predict the probability that the home team will
+ultimately win a game. Multiple versions of the models were explored,
+including adjustments for neutral-site games and home-court advantage.
 
 ## Maximum Likelihood Estimation & Dynamic Bayesian Models
 
-In addition to logistic regression, win probability was estimated directly from historical game outcomes using Maximum Likelihood Estimation (MLE) and Dynamic Bayesian methods. These approaches calculate probabilities based on how teams in similar game situations performed historically. The Dynamic Bayesian model incorporates Beta priors to stabilize estimates and improve performance in game states with limited historical observations.
+In addition to logistic regression, win probability was estimated
+directly from historical game outcomes using Maximum Likelihood
+Estimation (MLE) and Dynamic Bayesian methods. These approaches
+calculate probabilities based on how teams in similar game situations
+performed historically. The Dynamic Bayesian model incorporates Beta
+priors to stabilize estimates and improve performance in game states
+with limited historical observations.
 
 ## Predicted Win Probability Plots
 
-The trained models were used to generate in-game win probability plots for individual 2026 NCAA men's basketball games. These visualizations track how the home team's chances of winning evolve throughout a game and highlight important momentum swings, scoring runs, and critical moments. Several model outputs were compared to better understand how different modeling approaches influence win probability estimates.
+The trained models were used to generate in-game win probability plots
+for individual 2026 NCAA men’s basketball games. These visualizations
+track how the home team’s chances of winning evolve throughout a game
+and highlight important momentum swings, scoring runs, and critical
+moments. Several model outputs were compared to better understand how
+different modeling approaches influence win probability estimates.
 
-```{r}
-#| warning: false
-#| echo: false
-#| include: false
-
-library(here)
-
-mich_uconn_mle_neutral_plot <- readRDS(here("data", "mich_uconn_mle_neutral_plot.rds"))
-```
-
-```{r}
-#| warning: false
-#| echo: false
-
-mich_uconn_mle_neutral_plot
-```
-
+![](README_files/figure-commonmark/unnamed-chunk-2-1.png)
 
 ## Interactive Data Storytelling with Closeread
 
-The project also explored the Quarto Closeread extension as a tool for interactive storytelling. Closeread combines narrative text with synchronized visualizations, allowing readers to explore key moments within games through scrolling, zooming, and guided annotations. Custom CSS features were developed to enhance the user experience, including picture-in-picture minimaps and dynamic plot highlighting.
+The project also explored the Quarto Closeread extension as a tool for
+interactive storytelling. Closeread combines narrative text with
+synchronized visualizations, allowing readers to explore key moments
+within games through scrolling, zooming, and guided annotations. Custom
+CSS features were developed to enhance the user experience, including
+picture-in-picture minimaps and dynamic plot highlighting.
 
 ## Additional Project Repository
 
-Here is an additional project repository containing a Quarto Blog that goes over all aspects of the project: [https://github.com/cooperolney/Fellowship-Final-Report](https://github.com/cooperolney/Fellowship-Final-Report)
+Here is an additional project repository containing a Quarto Blog that
+goes over all aspects of the project:
+<https://github.com/cooperolney/Fellowship-Final-Report>
 
-Here is the Quarto Blog: [https://cooperolney.github.io/Fellowship-Final-Report/](https://cooperolney.github.io/Fellowship-Final-Report/)
-
-
+Here is the Quarto Blog:
+<https://cooperolney.github.io/Fellowship-Final-Report/>
