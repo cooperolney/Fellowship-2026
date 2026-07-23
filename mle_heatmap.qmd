@@ -101,13 +101,15 @@ mle_heatmap_clean <- mbb_pbp_2025_clean |>
 
 
 # MLE Heatmap with cleaned data
-ggplot(mle_heatmap_clean, aes(x = time_elapsed, y = lead_diff, fill = win_prob)) +
+mle_heatmap_plot <- ggplot(mle_heatmap_clean, aes(x = time_elapsed, y = lead_diff, fill = win_prob)) +
   geom_tile() +
   scale_fill_gradientn(colors = c("blue", "green", "white", "yellow", "red")) +
   labs(x = "Time elapsed", 
        y = "Score diff",
        fill = "p") +
   theme_minimal()
+
+saveRDS(mle_heatmap_plot, "mle_heatmap_plot.rds")
 ```
 
 

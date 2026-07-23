@@ -389,14 +389,19 @@ write_csv(duke_va_db, "duke_va_db.csv")
 
 # Plot
 # change dataframe
-ggplot(duke_va_db, aes(x = time_elapsed, y = win_prob)) +
+duke_uconn_brm_plot <- ggplot(duke_uconn_brm, aes(x = time_elapsed, y = win_prob)) +
   geom_line() +
   geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray") +
   geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
   scale_y_continuous(limits = c(0, 1)) +
   labs(x = "Time Elapsed (seconds)",
-       y = "Predicted Home Win Probability") +
+       y = "Predicted Home Win Probability",
+       title = "Duke vs UConn - Bayesian Logistic") +
   theme_minimal()
+
+# saveRDS(duke_va_log_plot, "duke_va_log_plot.rds")
+# saveRDS(mich_uconn_mle_plot, "mich_uconn_mle_plot.rds")
+# saveRDS(duke_uconn_brm_plot, "duke_uconn_brm_plot.rds")
 ```
 
 ```{r}
@@ -421,14 +426,14 @@ duke_uconn_brm <- get_win_prob(duke_uconn_game, "brm", mle_clean, db_full, log_m
                                      max_rating_diff = max_rating_diff)
 
 # Plot, change dataframe
-ggplot(duke_uconn_db, aes(x = time_elapsed, y = win_prob)) +
+ggplot(duke_uconn_brm, aes(x = time_elapsed, y = win_prob)) +
   geom_line() +
   geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray") +
   geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
   scale_y_continuous(limits = c(0, 1)) +
   labs(x = "Time Elapsed (seconds)",
        y = "Predicted Home Win Probability",
-       title = "Duke vs UConn - Dynamic Bayes") +
+       title = "Duke vs UConn - Bayesian Logistic") +
   theme_minimal()
 
 # All 5 Methods
@@ -477,7 +482,7 @@ mich_uconn_mle_neutral <- mich_uconn_mle_A |>
   mutate(win_prob_neutral = (win_prob_A + (1 - win_prob_B)) / 2)
 
 # Plot
-ggplot(mich_uconn_mle_neutral, aes(x = time_elapsed, y = win_prob_neutral)) +
+mich_uconn_mle_neutral_plot <- ggplot(mich_uconn_mle_neutral, aes(x = time_elapsed, y = win_prob_neutral)) +
   geom_line(linewidth = 0.4) +
   geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
   scale_x_continuous(breaks = seq(0, 2400, by = 300)) +
@@ -486,6 +491,8 @@ ggplot(mich_uconn_mle_neutral, aes(x = time_elapsed, y = win_prob_neutral)) +
        x = "Time Elapsed (seconds)",
        y = "Predicted Win Probability (Michigan)") +
   theme_minimal(base_size = 14)
+
+#saveRDS(mich_uconn_mle_neutral_plot, "mich_uconn_mle_neutral_plot.rds")
 ```
 
 
@@ -552,7 +559,7 @@ duke_uconn_db_neutral <- duke_uconn_db_A |>
 
 
 # Plot
-ggplot(duke_uconn_db_neutral, aes(x = time_elapsed, y = win_prob_neutral)) +
+duke_uconn_db_neutral_plot <- ggplot(duke_uconn_db_neutral, aes(x = time_elapsed, y = win_prob_neutral)) +
   geom_line(linewidth = 0.4) +
   geom_vline(xintercept = 1200, linetype = "dashed", color = "gray") +
   scale_x_continuous(breaks = seq(0, 2400, by = 300)) +
@@ -563,6 +570,7 @@ ggplot(duke_uconn_db_neutral, aes(x = time_elapsed, y = win_prob_neutral)) +
   theme_minimal(base_size = 14)
 
 #write_csv(duke_uconn_db_neutral, "duke_uconn_db_neutral.csv")
+#saveRDS(duke_uconn_db_neutral_plot, "duke_uconn_db_neutral_plot.rds")
 ```
 
 

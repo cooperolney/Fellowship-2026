@@ -170,13 +170,15 @@ preds_log_mod <- ggpredict(log_mod, terms = c("time_elapsed [0:2400 by=10]",
   as_tibble()
 
 # visualization
-ggplot(data = preds_log_mod, aes(x = time_elapsed, y = predicted)) +
+log_no_rating <- ggplot(data = preds_log_mod, aes(x = time_elapsed, y = predicted)) +
   geom_line(aes(color = factor(lead_diff)), linewidth = 1.5) +
   scale_colour_viridis_d(option = "D") +
   labs(x = "Time Elapsed (seconds)", 
        y = "Predicted Home Win Probability",
        color = "Lead Diff") +
   theme_minimal()
+
+#saveRDS(log_no_rating, "log_no_rating.rds")
 ```
 Plot Takeaways
 - When lead_diff = 0, it starts at 67% and slowly decreases over time, so home court advantage slightly fades as time goes on
@@ -234,6 +236,11 @@ mbb_pbp |> summarise(
   total_games = n_distinct(game_id),
   total_playoff_games = n_distinct(game_id[season_type == 3]),
   total_teams = n_distinct(home_team_id)
+  )
+
+
+final_data |> summarise(
+  total_games = n_distinct(game_id),
   )
 ```
 - total games: 6275
