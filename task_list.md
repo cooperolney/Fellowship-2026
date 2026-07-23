@@ -1,5 +1,13 @@
 # Task List
 
+## Final Tasks
+
+1. Add a plot or two to the README. Add link to closeread post at beginning.
+
+2. Bump up the size of the y-axis and x-axis? numbers on the closeread.
+
+3. Second re-organization of the file structure in the repository. 
+
 ## Tasks for 7/23
 
 1. Make edits on the poster.
