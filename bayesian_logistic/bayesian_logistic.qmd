@@ -715,7 +715,7 @@ preds_brm_mod_rank_scaled <- pred_grid |>
   )
 
 # plot
-ggplot(preds_brm_mod_rank_scaled, aes(x = time_elapsed, y = predicted, 
+brm_plot <- ggplot(preds_brm_mod_rank_scaled, aes(x = time_elapsed, y = predicted, 
                           color = factor(lead_diff))) +
   geom_ribbon(aes(ymin = lower, ymax = upper, fill = factor(lead_diff)),
               alpha = 0.25, color = NA) +
@@ -726,20 +726,25 @@ ggplot(preds_brm_mod_rank_scaled, aes(x = time_elapsed, y = predicted,
        y = "Predicted Home Win Probability",
        color = "Lead Diff", 
        fill = "Lead Diff",
-       title = "Bayesian Logistic") +
+       title = "Bayesian Logistic Regression") +
   theme_minimal()
+
+saveRDS(brm_plot, "brm_plot.rds")
 ```
 
 # log_full_rank.rds - Logistic Regression
 ```{r}
 log_full_rank <- readRDS("frequentist_logistic/log_full_rank.rds")
 
-preds_log_mod_rank <- ggpredict(log_full_rank, terms = c("time_elapsed [0:2400 by=10]",
-                                        "lead_diff [-15, -10, -5, 0, 5, 10, 15]")) |>
+preds_log_mod_rank <- ggpredict(log_full_rank, 
+    terms = c("time_elapsed [0:2400 by=10]",
+              "lead_diff [-15, -10, -5, 0, 5, 10, 15]"),
+    condition = c(rating_diff = 0)
+  ) |>
    as.data.frame(terms_to_colnames = TRUE) |>
    as_tibble()
 
-ggplot(preds_log_mod_rank, aes(x = time_elapsed, y = predicted, 
+log_with_rating <- ggplot(preds_log_mod_rank, aes(x = time_elapsed, y = predicted, 
                           color = factor(lead_diff))) +
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = factor(lead_diff)),
               alpha = 0.25, color = NA) +
@@ -750,12 +755,14 @@ ggplot(preds_log_mod_rank, aes(x = time_elapsed, y = predicted,
        y = "Predicted Home Win Probability",
        color = "Lead Diff", 
        fill = "Lead Diff",
-       title = "Logistic Regression") +
+       title = "Frequentist Logistic Regression w/ Rating") +
   theme_minimal()
+
+saveRDS(log_with_rating, "log_with_rating.rds")
 ```
 
 
-# Bayesian Logistic w/ Home Court Advantage
+# (Don't Use) Bayesian Logistic w/ Home Court Advantage
 ```{r}
 brm_full <- readRDS("bayesian_logistic/brm_full.rds")
 
@@ -765,11 +772,12 @@ min_rating_diff <- min(subset_games$rating_diff)
 max_rating_diff <- max(subset_games$rating_diff)
 
 # Build prediction grid: evenly matched teams (rating_diff = 0)
-# but home team gets the +3.3 home-court advantage baked in
+
+# home team gets the +3.3 home-court advantage added on
 pred_grid_home_adv <- expand.grid(
   time_elapsed = seq(0, 2400, by = 10),
   lead_diff    = c(-15, -10, -5, 0, 5, 10, 15),
-  rating_diff  = 0 + 3.3 # true team-strength diff (0) + home advantage (3.3)
+  rating_diff  = 0 + 3.3 # remove the +3.3
 ) |>
   mutate(
     time_scaled   = time_elapsed / 2400,
@@ -804,12 +812,13 @@ ggplot(preds_brm_home_adv, aes(x = time_elapsed, y = predicted,
   theme_minimal()
 ```
 
-# Logistic Regression w/ Home Court Advantage
+# (Don't Use) Logistic Regression w/ Home Court Advantage
 ```{r}
 log_full_rank <- readRDS("frequentist_logistic/log_full_rank.rds")
 
 preds_log_mod_rank_home <- ggpredict(log_full_rank, terms = c("time_elapsed [0:2400 by=10]", "lead_diff [-15, -10, -5, 0, 5, 10, 15]"),
-                                     condition = c(rating_diff = 3.3)) |>
+                                     condition = c(rating_diff = 3.3)) |> 
+  # remove the 3.3. Don't need to change the prediction grid, need to change the actual data.
    as.data.frame(terms_to_colnames = TRUE) |>
    as_tibble()
 
@@ -827,4 +836,128 @@ ggplot(preds_log_mod_rank_home, aes(x = time_elapsed, y = predicted,
        title = "Logistic Regression w/ Home Court Advantage") +
   theme_minimal()
 ```
+
+
+# 7/14 Incorporate +3.3 Rating Diff
+```{r}
+library(hoopR)
+
+# load final data
+final_data <- readRDS("final_data.rds")
+
+# load schedule data
+mbb_schedule <- hoopR::load_mbb_schedule(seasons = 2025)
+
+mbb_schedule <- mbb_schedule |>
+  select(game_id, neutral_site)
+
+# Update Final Dataset
+final_data_neutral <- final_data |>
+  left_join(mbb_schedule, by = "game_id")
+
+
+# Change rating_diff, if neutral site = False add 3.3 to rating diff
+final_data_neutral <- final_data_neutral |>
+  mutate(rating_diff = if_else(neutral_site == FALSE, rating_diff + 3.3, rating_diff))
+
+#saveRDS(final_data_neutral, file = "final_data_neutral.rds")
+
+final_data_neutral |> 
+  group_by(game_id) |> 
+  slice_head(n = 1) |> 
+  ungroup() |>
+  summarise(
+    total_games = n(),
+    total_neutral_games = sum(neutral_site == TRUE)
+  )
+# 721 / 6136 = 11.8% games are at neutral sites
+```
+
+
+# Neutral brm_full.rds - Bayesian Logistic
+```{r}
+brm_full_neutral <- readRDS("bayesian_logistic/brm_full_neutral.rds")
+
+# model predictions
+# build grid manually
+
+min_lead_diff <- min(subset_games$lead_diff)
+max_lead_diff <- max(subset_games$lead_diff)
+
+min_rating_diff <- min(subset_games$rating_diff)
+max_rating_diff <- max(subset_games$rating_diff)
+
+# Build prediction grid in original units, then scale to match the model
+pred_grid <- expand.grid(
+  time_elapsed = seq(0, 2400, by = 10),
+  lead_diff    = c(-15, -10, -5, 0, 5, 10, 15),
+  rating_diff  = 0   
+) |>
+  mutate(
+    time_scaled   = (time_elapsed - 0) / (2400 - 0),
+    lead_scaled   = (lead_diff - min_lead_diff) / (max_lead_diff - min_lead_diff),
+    rating_scaled = (rating_diff - min_rating_diff) / (max_rating_diff - min_rating_diff)
+  )
+
+# Get posterior predicted probabilities
+preds_brm_mod_rank_neutral <- pred_grid |>
+  mutate(
+    predicted = posterior_epred(brm_full_neutral, newdata = pred_grid) |>
+      colMeans(),
+    # optional: get credible intervals too
+    lower = posterior_epred(brm_full_neutral, newdata = pred_grid) |>
+      apply(2, quantile, 0.025),
+    upper = posterior_epred(brm_full_neutral, newdata = pred_grid) |>
+      apply(2, quantile, 0.975)
+  )
+
+# plot
+brm_neutral <- ggplot(preds_brm_mod_rank_neutral, aes(x = time_elapsed, y = predicted, 
+                          color = factor(lead_diff))) +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = factor(lead_diff)),
+              alpha = 0.25, color = NA) +
+  geom_line(linewidth = 1.5) +
+  scale_colour_viridis_d(option = "D") +
+  scale_fill_viridis_d(option = "D") +
+  labs(x = "Time Elapsed (seconds)", 
+       y = "Predicted Home Win Probability",
+       color = "Lead Diff", 
+       fill = "Lead Diff",
+       title = "Bayesian Logistic w/ Neutral Sites") +
+  theme_minimal()
+
+saveRDS(brm_neutral, "brm_neutral.rds")
+```
+
+
+# Neutral log_full_rank.rds - Logistic Regression
+```{r}
+log_full_rank_neutral <- readRDS("frequentist_logistic/log_full_rank_neutral.rds")
+
+preds_log_mod_rank_neutral <- ggpredict(log_full_rank_neutral, 
+  terms = c("time_elapsed [0:2400 by=10]", 
+                "lead_diff [-15, -10, -5, 0, 5, 10, 15]"),
+  condition = c(rating_diff = 0)
+) |>
+   as.data.frame(terms_to_colnames = TRUE) |>
+   as_tibble()
+
+log_neutral <- ggplot(preds_log_mod_rank_neutral, aes(x = time_elapsed, y = predicted, 
+                          color = factor(lead_diff))) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = factor(lead_diff)),
+              alpha = 0.25, color = NA) +
+  geom_line(linewidth = 1.5) +
+  scale_colour_viridis_d(option = "D") +
+  scale_fill_viridis_d(option = "D") +
+  labs(x = "Time Elapsed (seconds)", 
+       y = "Predicted Home Win Probability",
+       color = "Lead Diff", 
+       fill = "Lead Diff",
+       title = "Logistic Regression w/ Neutral Sites") +
+  theme_minimal()
+
+saveRDS(log_neutral, "log_neutral.rds")
+```
+
+
 

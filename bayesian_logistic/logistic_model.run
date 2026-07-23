@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=frequentist_regression             # What to show in squeue
+#SBATCH --job-name=frequentist            # What to show in squeue
 #SBATCH --mail-type=END,FAIL            # When to send mail (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=cmolne23@stlawu.edu  # Where to send mail
 #SBATCH --ntasks=1                    # Run 

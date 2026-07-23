@@ -233,7 +233,7 @@ ggplot(db_half, aes(x = time_elapsed, y = lead_diff, fill = win_prob)) +
 # All of the dataset, 6136 games
 db_full <- readRDS("dynamic_bayes/dynamic_bayes_full.rds")
 
-ggplot(db_full, aes(x = time_elapsed, y = lead_diff, fill = win_prob)) +
+db_heatmap_plot <- ggplot(db_full, aes(x = time_elapsed, y = lead_diff, fill = win_prob)) +
   geom_tile() +
   scale_fill_gradientn(colors = c("blue", "green", "white", "yellow", "red")) +
   labs(
@@ -242,6 +242,8 @@ ggplot(db_full, aes(x = time_elapsed, y = lead_diff, fill = win_prob)) +
     fill = "p"
   ) +
   theme_minimal()
+
+saveRDS(db_heatmap_plot, "db_heatmap_plot.rds")
 ```
 
 

@@ -3,17 +3,17 @@ library(tidyr)
 library(brms)
 library(ggeffects)
 
-final_data <- readRDS("final_data.rds")
+final_data_neutral <- readRDS("final_data_neutral.rds")
 
 # Data Subset
 set.seed(123)
 
-unique_games <- final_data |> distinct(game_id) |> pull(game_id)
+unique_games <- final_data_neutral |> distinct(game_id) |> pull(game_id)
 
 selected_games <- sample(unique_games, 6136)
 
 # subset of 50 games
-subset_games <- final_data |> 
+subset_games <- final_data_neutral |> 
   filter(game_id %in% selected_games) #|>
 #filter(time_elapsed %% 24 == 0)
 
@@ -35,8 +35,8 @@ subset_games <- subset_games |>
 
 log_mod_rank <- glm(home_win ~ lead_diff + time_elapsed + rating_diff + 
                         time_elapsed:lead_diff + time_elapsed:rating_diff,
-                      data = final_data, family = "binomial")
+                      data = final_data_neutral, family = "binomial")
 
-saveRDS(log_mod_rank, file = "log_full_rank.rds")
+saveRDS(log_mod_rank, file = "log_full_rank_neutral.rds")
 
 

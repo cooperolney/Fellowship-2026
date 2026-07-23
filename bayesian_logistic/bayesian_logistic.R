@@ -3,17 +3,17 @@ library(tidyr)
 library(brms)
 library(ggeffects)
 
-final_data <- readRDS("final_data.rds")
+final_data_neutral <- readRDS("final_data_neutral.rds")
 
 # Data Subset
 set.seed(123)
 
-unique_games <- final_data |> distinct(game_id) |> pull(game_id)
+unique_games <- final_data_neutral |> distinct(game_id) |> pull(game_id)
 
 selected_games <- sample(unique_games, 6136)
 
 # subset of 50 games
-subset_games <- final_data |> 
+subset_games <- final_data_neutral |> 
   filter(game_id %in% selected_games) #|>
   #filter(time_elapsed %% 24 == 0)
 
@@ -51,7 +51,7 @@ brm_mod_rank <- brm(home_win ~ lead_scaled + time_scaled + rating_scaled + time_
 #   as_tibble()
 
 ##  -- Save rds file --
-saveRDS(brm_mod_rank, file = "brm_full.rds")
+saveRDS(brm_mod_rank, file = "brm_full_neutral.rds")
 
 
 
